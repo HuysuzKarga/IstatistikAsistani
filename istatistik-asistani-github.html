@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>İstatistik Asistanı v0.8</title>
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--text:#222;--muted:#666;--line:#d8d4ca;--accent:#2f6fed;--ok:#1d7a4a;--warn:#b26a00;--bad:#c0392b;--soft:#eef3ff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17181b;--card:#222428;--text:#eee;--muted:#9a9ea6;--line:#3a3d44;--accent:#6b9bff;--ok:#43c086;--warn:#f0a53a;--bad:#ff7b76;--soft:#232b3d;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17181b;--card:#222428;--text:#eee;--muted:#9a9ea6;--line:#3a3d44;--accent:#6b9bff;--ok:#43c086;--warn:#f0a53a;--bad:#ff7b76;--soft:#232b3d;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5;padding:14px}
+.wrap{max-width:900px;margin:0 auto}
+h1{font-size:1.4rem;margin:4px 0}h2{font-size:1.1rem;margin:0 0 8px}h3{font-size:1rem;margin:12px 0 4px}
+.sub{color:var(--muted);margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+.sc{overflow-x:auto}
+table{border-collapse:collapse;font-size:.9rem}
+td,th{border:1px solid var(--line);padding:3px 6px;text-align:left}
+th{background:var(--soft)}
+#g input{width:96px;border:0;background:transparent;color:var(--text);padding:4px;font:inherit}
+#g tr:nth-child(2) input{font-weight:700;background:var(--soft)}
+#g th{text-align:center;font-weight:600;color:var(--muted);min-width:30px}
+.lb input{font:inherit;width:110px;padding:4px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--text)}
+.lb table{margin-bottom:8px}
+#g td{position:relative}
+.fh{display:none;position:absolute;right:-2px;bottom:-2px;width:12px;height:12px;background:var(--accent);border:2px solid var(--card);cursor:crosshair;touch-action:none;z-index:3}
+#g td.sel .fh{display:block}
+#g td.sel input{outline:2px solid var(--accent);outline-offset:-2px}
+#g td.rng{background:rgba(47,111,237,.22)}
+#g td.sl{background:rgba(47,111,237,.22)}
+#g.rm input{pointer-events:none}
+#g th{cursor:pointer}
+#dlg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:14px;z-index:50}
+#dlg[hidden]{display:none}
+.dc{background:var(--card);border-radius:12px;padding:16px;max-width:560px;max-height:90vh;overflow:auto}
+.dc input,.dc select{font:inherit;padding:4px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--text)}
+.dc input{width:100px}
+.sz input,#mu0,#alpha{font:inherit;padding:5px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--text)}
+.sz input{width:68px}
+.paper{background:var(--card);color:var(--text);border:1px solid var(--line);padding:18px;border-radius:12px;line-height:1.6}
+.paper h1{font-size:1.3rem;margin:0 0 4px}
+.paper h2{font-size:1.1rem;margin:20px 0 6px}
+.rt{border-collapse:collapse;font-size:.88rem;margin:4px 0 14px}
+.rt td,.rt th{border:1px solid var(--line);padding:4px 8px;text-align:center}
+.rt th{background:var(--soft);font-weight:700}
+.rt caption{caption-side:top;text-align:left;font-weight:700;padding:4px 0}
+.rtw{overflow-x:auto}.rtb{text-align:right}
+.fig{text-align:center;margin:10px 0 16px}.fig svg{max-width:100%;height:auto}
+.fig .cap{font-size:.85rem;color:var(--muted);text-align:left;margin-top:4px}
+#g th{position:relative}
+#g th .cr{position:absolute;right:0;top:0;bottom:0;width:7px;cursor:col-resize}
+.cl{color:var(--accent);text-decoration:underline;cursor:pointer}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:8px;z-index:60;max-width:90vw}
+#toast[hidden]{display:none}
+button,select{font:inherit;padding:8px 14px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer;margin:3px 3px 3px 0}
+button.alt{background:transparent;color:var(--accent)}
+select{background:var(--card);color:var(--text);border-color:var(--line);padding:6px}
+.w{color:var(--warn)}.b{color:var(--bad)}.o{color:var(--ok)}
+.box{background:var(--soft);border-radius:8px;padding:10px;margin:8px 0}
+ul{margin:4px 0;padding-left:20px}
+.note{color:var(--muted);font-size:.85rem}
+</style>
+</head>
+<body>
+<div class="wrap" id="main">
+<h1>📊 İstatistik Asistanı <small style="font-size:.55em;color:var(--muted);font-weight:400">v0.8 · deneme sürümü</small></h1>
+<p class="sub">Ham veriyi yapıştır, program uygun testi seçsin; nedenlerini ve alternatiflerini de anlatsın. Verin tarayıcından dışarı çıkmaz. <button class="alt" id="about">ℹ️ Neler yapabilir?</button><button class="alt" id="fb">💬 Geri bildirim</button></p>
+
+<div class="card">
+  <h2>1) Veriyi gir</h2>
+  <p class="note">İlk satır değişken adlarıdır. Excel’den kopyalayıp bir hücreye yapıştırabilirsin (Ctrl+V). Bir hücreye tıklayınca sağ altta çıkan küçük kareyi aşağı sürükleyerek değeri istediğin kadar satıra kopyalayabilirsin (çift tıklarsan yan sütunlardaki veri kadar dolar). Ctrl+D üstteki hücreyi kopyalar. Grup için 1, 2 gibi kodlar yazabilir, adlarını sonra “Değer etiketleri” panelinden verebilirsin. Ctrl+Z geri alır, Ctrl+Y yineler. Satır numarasına ya da sütun harfine tıklayarak, fareyle sürükleyerek veya Shift+tıklayarak birden çok hücre seçip Delete ile silebilirsin.</p>
+  <div class="sc"><table id="g"></table></div>
+  <span class="sz">Satır: <input id="nr" type="number" min="2" max="1000"> Sütun: <input id="nc" type="number" min="1" max="26"> <button id="apply" class="alt">Boyutu uygula</button></span><button id="undo" class="alt">↶ Geri al</button><button id="redo" class="alt">↷ Yinele</button><button id="delsel" class="alt" hidden>Seçilileri sil</button><button id="sample" class="alt">Örnek veri…</button><button id="csv" class="alt">CSV/TSV yükle…</button><input type="file" id="csvFile" accept=".csv,.tsv,.txt" style="display:none"><button id="clear" class="alt">Temizle</button>
+  <div><button id="check">Veriyi kontrol et →</button></div>
+</div>
+
+<div class="card" id="c2" hidden>
+  <h2>2) Veri kontrolü</h2>
+  <p class="note">Önce her değişkenin ölçek düzeyini (ölçek, sıralı, adlandırma) ve olası giriş hatalarını inceleriz. Yanlış düzey seçmek yanlış test demektir. Otomatik tahmin: 7 ve üzeri farklı sayı → ölçek, 3-6 farklı sayı → sıralı (ör. Likert), 2 farklı değer ya da metin → adlandırma. Gerekirse aşağıdan sen değiştir.</p>
+  <div class="sc" id="chk"></div>
+  <h3>Değer etiketleri (kodlama)</h3>
+  <p class="note">Adlandırma ve sıralı değişkenlerde her ham değere bir kod ve etiket ver (ör. Kontrol = 1, Deney = 2). Aynı kodu verdiğin değerler tek grup sayılır; böylece “kontrol” ve “Kontrol ” gibi yazım farklarını birleştirebilirsin. Sıralı değişkenlerde kodlar sırayı belirler (küçükten büyüğe).</p>
+  <div class="sc lb" id="lab"></div>
+  <h3>Karşılaştırma</h3>
+  <div>Sonuç (ölçek, sıralı veya nominal): <select id="dv"></select> &nbsp; Grup (isteğe bağlı): <select id="gv"></select> &nbsp; <span class="note">Tek değişken için grubu boş bırak.</span> &nbsp; Analiz türü: <select id="amac"><option value="auto">Otomatik</option><option value="cmp">Grupları karşılaştır</option><option value="rel">İlişki / bağımsızlık</option><option value="corr">Korelasyon (Pearson)</option><option value="pair">Eşleştirilmiş (ön-son, aynı birim)</option></select> &nbsp; Karşılaştırma değeri μ₀: <input id="mu0" type="number" step="any" value="0" style="width:90px"> &nbsp; Anlamlılık düzeyi (α): <input id="alpha" type="text" inputmode="decimal" value="0,05" style="width:70px"></div><div id="msg" class="b"></div>
+  <button id="run">Analiz et →</button><button id="likert" class="alt">Anket ölçeği güvenirliği (Cronbach α)…</button>
+</div>
+
+<div id="out"></div>
+</div>
+
+<div class="wrap" id="rep" hidden><p><button class="alt" onclick="closeReport()">← Sonuçlara dön</button> <button class="alt" onclick="copyAll()">📋 Tüm raporu kopyala</button> <button class="alt" onclick="openCharts()">📈 Grafikler</button></p><div class="paper" id="repb"></div></div>
+<div id="toast" hidden></div>
+<div id="dlg" hidden><div class="dc" id="dlgc"></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jstat/1.9.6/jstat.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const f=(x,d=3)=>Number.isFinite(x)?x.toFixed(d).replace('.',','):'–';
+const fp=p=>p==null?'–':p<.001?'< ,001':f(p,3);
+const NUM=/^[+-]?(\d+([.,]\d*)?|[.,]\d+)(e[+-]?\d+)?$/i;
+const toN=s=>NUM.test(s.trim())?Number(s.trim().replace(',','.')):NaN;
+
+/* ---------- Tablo ---------- */
+let NC=5,NR=30,DR=30,DC=5,ALPHA=.05,RES=null,COLW={},FIGPNG=[];
+function cell(r,c){return `<td><input data-r="${r}" data-c="${c}" style="width:${COLW[c]||96}px"><i class="fh" data-r="${r}" data-c="${c}"></i></td>`}
+const L=i=>i<26?String.fromCharCode(65+i):String.fromCharCode(64+(i/26|0))+String.fromCharCode(65+i%26);
+function build(){let h='<tr><th></th>';for(let c=0;c<NC;c++)h+='<th>'+L(c)+'<i class="cr" data-c="'+c+'"></i></th>';h+='</tr>';for(let r=0;r<NR;r++){h+='<tr><th>'+(r?r:'<small title="Değişken adı satırı">Ad</small>')+'</th>';for(let c=0;c<NC;c++)h+=cell(r,c);h+='</tr>'}$('g').innerHTML=h;if($('nr')){$('nr').value=NR;$('nc').value=NC}}
+function grid(){const a=[];document.querySelectorAll('#g input').forEach(i=>{(a[+i.dataset.r]=a[+i.dataset.r]||[])[+i.dataset.c]=i.value});return a}
+function fill(rows){NR=Math.max(NR,rows.length+1);NC=Math.max(NC,...rows.map(r=>r.length));build();document.querySelectorAll('#g input').forEach(i=>{const v=(rows[+i.dataset.r]||[])[+i.dataset.c];if(v!=null)i.value=v})}
+$('g').addEventListener('paste',e=>{
+  const t=e.clipboardData.getData('text');if(!t.includes('\t')&&!t.includes('\n'))return;
+  e.preventDefault();const r0=+e.target.dataset.r,c0=+e.target.dataset.c;
+  const rows=grid().map(r=>r.slice());
+  t.replace(/\r/g,'').replace(/\n$/,'').split('\n').forEach((ln,i)=>ln.split('\t').forEach((v,j)=>{(rows[r0+i]=rows[r0+i]||[])[c0+j]=v}));
+  fill(rows);commit();
+});
+/* Doldurma tutamağı (Excel gibi) */
+let drag=null,selTd=null;
+$('g').addEventListener('focusin',e=>{if(e.target.tagName!=='INPUT')return;if(selTd)selTd.classList.remove('sel');selTd=e.target.closest('td');selTd.classList.add('sel')});
+const cellIn=(r,c)=>document.querySelector(`#g input[data-r="${r}"][data-c="${c}"]`);
+function addRows(n){let h='';for(let r=NR;r<NR+n;r++){h+='<tr><th>'+(r?r:'<small title="Değişken adı satırı">Ad</small>')+'</th>';for(let c=0;c<NC;c++)h+=cell(r,c);h+='</tr>'}$('g').tBodies[0].insertAdjacentHTML('beforeend',h);NR+=n}
+function fillDown(r,c,to){const v=cellIn(r,c).value;while(NR<=to)addRows(10);for(let i=r+1;i<=to;i++){const el=cellIn(i,c);if(el){el.value=v;el.style.background=''}}commit()}
+function clearRng(){document.querySelectorAll('#g td.rng').forEach(t=>t.classList.remove('rng'))}
+$('g').addEventListener('pointerdown',e=>{const h=e.target.closest&&e.target.closest('.fh');if(!h)return;e.preventDefault();drag={r:+h.dataset.r,c:+h.dataset.c,to:+h.dataset.r}});
+document.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  const el=document.elementFromPoint(e.clientX,e.clientY),td=el&&el.closest&&el.closest('#g td'),inp=td&&td.querySelector('input');
+  if(!inp)return;
+  const r=Math.max(drag.r,+inp.dataset.r);
+  if(r>=NR-1)addRows(10);
+  drag.to=r;clearRng();for(let i=drag.r+1;i<=r;i++){const x=cellIn(i,drag.c);if(x)x.closest('td').classList.add('rng')}
+});
+document.addEventListener('pointerup',()=>{if(!drag)return;const d=drag;drag=null;clearRng();if(d.to>d.r)fillDown(d.r,d.c,d.to)});
+document.addEventListener('pointercancel',()=>{drag=null;clearRng()});
+$('g').addEventListener('dblclick',e=>{const h=e.target.closest&&e.target.closest('.fh');if(!h)return;const r=+h.dataset.r,c=+h.dataset.c,g=grid();let last=r;g.forEach((row,i)=>{if(i>r&&row&&row.some((v,j)=>j!==c&&v&&v.trim()!==''))last=i});if(last>r)fillDown(r,c,last)});
+$('g').addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&(e.key==='d'||e.key==='D')&&e.target.tagName==='INPUT'){e.preventDefault();const r=+e.target.dataset.r,c=+e.target.dataset.c;if(r>0){e.target.value=cellIn(r-1,c).value;e.target.style.background='';commit()}}});
+/* Geri al / yinele ve çoklu seçim */
+let U=[],Rd=[],last='',RS=null,anc=null,rmode=false,pressing=false;
+const snap=()=>JSON.stringify(grid());
+function commit(){const s=snap();if(s===last)return;U.push(last);if(U.length>100)U.shift();Rd=[];last=s}
+function restore(s){fill(JSON.parse(s).map(r=>r?r.map(v=>v==null?'':v):[]));last=s;RS=null;showSel()}
+function undo(){if(snap()!==last){restore(last);return}if(!U.length)return;Rd.push(last);restore(U.pop())}
+function redo(){if(!Rd.length)return;U.push(last);restore(Rd.pop())}
+$('g').addEventListener('change',commit);
+function selBox(){return{r1:Math.min(RS.r1,RS.r2),r2:Math.max(RS.r1,RS.r2),c1:Math.min(RS.c1,RS.c2),c2:Math.max(RS.c1,RS.c2)}}
+function showSel(){
+  document.querySelectorAll('#g td.sl').forEach(t=>t.classList.remove('sl'));
+  $('delsel').hidden=!RS;if(!RS)return;
+  const b=selBox();
+  for(let r=b.r1;r<=b.r2;r++)for(let c=b.c1;c<=b.c2;c++){const x=cellIn(r,c);if(x)x.closest('td').classList.add('sl')}
+}
+function clearSel(){
+  if(!RS)return;const b=selBox();
+  for(let r=b.r1;r<=b.r2;r++)for(let c=b.c1;c<=b.c2;c++){const x=cellIn(r,c);if(x){x.value='';x.style.background=''}}
+  commit();
+}
+$('g').addEventListener('mousedown',e=>{if(e.shiftKey&&anc&&e.target.tagName==='INPUT')e.preventDefault()});
+$('g').addEventListener('pointerdown',e=>{
+  if(e.target.closest('.fh')||e.target.closest('.cr'))return;
+  const th=e.target.closest('th');
+  if(th){const tr=th.parentElement,ci=th.cellIndex,ri=tr.rowIndex;
+    if(ri===0&&ci===0)RS={r1:0,r2:NR-1,c1:0,c2:NC-1};
+    else if(ri===0)RS={r1:0,r2:NR-1,c1:ci-1,c2:ci-1};
+    else if(ci===0)RS={r1:ri-1,r2:ri-1,c1:0,c2:NC-1};
+    else return;
+    rmode=true;if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();showSel();return}
+  if(e.target.tagName!=='INPUT')return;
+  const r=+e.target.dataset.r,c=+e.target.dataset.c;
+  if(e.shiftKey&&anc){RS={r1:anc.r,c1:anc.c,r2:r,c2:c};rmode=true;showSel();return}
+  anc={r,c};rmode=false;RS=null;pressing=true;showSel();
+});
+document.addEventListener('pointermove',e=>{
+  if(!pressing||drag)return;
+  const el=document.elementFromPoint(e.clientX,e.clientY),td=el&&el.closest&&el.closest('#g td'),inp=td&&td.querySelector('input');
+  if(!inp)return;const r=+inp.dataset.r,c=+inp.dataset.c;
+  if(!rmode&&r===anc.r&&c===anc.c)return;
+  if(!rmode){rmode=true;$('g').classList.add('rm');if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();getSelection().removeAllRanges()}
+  RS={r1:anc.r,c1:anc.c,r2:r,c2:c};showSel();
+});
+['pointerup','pointercancel'].forEach(t=>document.addEventListener(t,()=>{pressing=false;$('g').classList.remove('rm')}));
+document.addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase(),ae=document.activeElement;
+  if((e.ctrlKey||e.metaKey)&&!e.altKey&&(k==='z'||k==='y')){
+    if(ae&&ae!==document.body&&!ae.closest('#g'))return;
+    e.preventDefault();(k==='y'||e.shiftKey)?redo():undo();return}
+  if(RS&&rmode&&(e.key==='Delete'||e.key==='Backspace')&&(!ae||ae===document.body)){e.preventDefault();clearSel()}
+});
+$('undo').onclick=undo;$('redo').onclick=redo;$('delsel').onclick=clearSel;
+/* Dönüşüm penceresi */
+function skew(a){const n=a.length;if(n<3)return NaN;const m=mean(a),s=sd(a);if(!s)return 0;return n/((n-1)*(n-2))*a.reduce((t,x)=>t+((x-m)/s)**3,0)}
+function go(tr){$('dlg').hidden=true;try{runAnalysis(tr)}catch(e){$('out').innerHTML='<div class="card"><p class="b">Beklenmedik bir sorun çıktı. Verini ve seçimlerini kontrol et; sorun sürerse bu mesajı ilet: '+esc(e.message)+'</p></div>'}}
+function askTransform(D){
+  const bad=D.filter(d=>!d.normal).map(d=>esc(d.name)).join(', ');
+  const sk=D.map(d=>{const s=skew(d.a);return esc(d.name)+' = '+f(s,2)+(s>.5?' (sağa çarpık)':s<-.5?' (sola çarpık)':' (belirgin çarpıklık yok)')}).join('; ');
+  $('dlgc').innerHTML=`<h2>Veri normal dağılmıyor</h2><p><b>${bad}</b> grubunda normallik sağlanmadı. Analize geçmeden önce veriyi dönüştürüp normale yaklaştırmayı deneyebilirsin. Dönüşüm istemezsen sıra tabanlı teste (Mann-Whitney U ya da Kruskal-Wallis) devam edilir.</p><p class="note">Çarpıklık katsayısı: ${sk}</p>
+<div class="box"><button onclick="go('log')">Logaritmik (log₁₀)</button><div class="note">Sağa çarpıklık güçlüyse ve değerler birkaç kat farklı büyüklükteyse (gelir, süre, derişim, bekleme süresi) seçilir. 0 ya da negatif değer varsa otomatik kaydırılır. Karşılaştırma log ölçeğinde yapılır; fark, orijinal ölçekte oran olarak yorumlanır.</div></div>
+<div class="box"><button onclick="go('sqrt')">Karekök (√x)</button><div class="note">Sağa çarpıklık daha hafifse ve veri sayım türündeyse (olay, hata, kişi sayısı) seçilir. Sıfır değerlerde sorun çıkarmaz, negatif değer varsa kaydırılır. Logaritma kadar güçlü bir düzeltme yapmaz.</div></div>
+<div class="box"><button class="alt" onclick="go('none')">Dönüşüm yapma</button><div class="note">Sola çarpık, iki tepeli ya da az sayıda farklı değeri olan veride dönüşüm genelde işe yaramaz; sıra tabanlı test daha güvenlidir. Dönüşüm yorumu zorlaştırdığı için gerekmedikçe tercih etme.</div></div>
+<p class="note">Dönüşümü p değerine bakarak değil, dağılımın şekline göre seç. Dönüşümden sonra normallik yeniden sınanır.</p><button class="alt" onclick="$('dlg').hidden=true">Vazgeç</button>`;
+  $('dlg').hidden=false;
+}
+/* Sütun genişliği */
+let crs=null;
+function setColW(c,w){COLW[c]=w;document.querySelectorAll('#g input[data-c="'+c+'"]').forEach(i=>{i.style.width=w+'px'})}
+function autoFit(c){
+  const ins=[...document.querySelectorAll('#g input[data-c="'+c+'"]')],sp=document.createElement('span');
+  sp.style.cssText='position:absolute;visibility:hidden;white-space:pre;font:'+getComputedStyle(ins[0]).font;document.body.appendChild(sp);
+  let w=60;ins.forEach(i=>{if(i.value){sp.textContent=i.value;w=Math.max(w,sp.offsetWidth+26)}});sp.remove();
+  setColW(c,Math.min(w,700));
+}
+$('g').addEventListener('pointerdown',e=>{const h=e.target.closest&&e.target.closest('.cr');if(!h)return;e.preventDefault();const c=+h.dataset.c;crs={c,x:e.clientX,w:COLW[c]||96}});
+document.addEventListener('pointermove',e=>{if(crs)setColW(crs.c,Math.max(40,Math.min(700,crs.w+e.clientX-crs.x)))});
+['pointerup','pointercancel'].forEach(t=>document.addEventListener(t,()=>{crs=null}));
+$('g').addEventListener('dblclick',e=>{const h=e.target.closest&&e.target.closest('.cr');if(h)autoFit(+h.dataset.c)});
+$('apply').onclick=applySize;
+function parseCSV(text){
+  text=text.replace(/^\uFEFF/,'');
+  const lines=text.split(/\r\n|\r|\n/).filter(l=>l.length);
+  if(!lines.length)return[];
+  const sample=lines[0];
+  const delim=(sample.match(/;/g)||[]).length>(sample.match(/,/g)||[]).length?';':(sample.includes('\t')?'\t':',');
+  return lines.map(line=>{
+    const out=[];let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(inQ){ if(c==='"'){ if(line[i+1]==='"'){cur+='"';i++} else inQ=false } else cur+=c; }
+      else{ if(c==='"')inQ=true; else if(c===delim){out.push(cur);cur=''} else cur+=c; }
+    }
+    out.push(cur);return out;
+  });
+}
+$('csv').onclick=()=>$('csvFile').click();
+$('csvFile').onchange=(e)=>{
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const rows=parseCSV(String(reader.result));
+      if(!rows.length){toast('Dosya boş görünüyor.');return}
+      NR=Math.max(DR,rows.length+2);NC=Math.max(DC,Math.max(...rows.map(r=>r.length)));
+      fill(rows);commit();
+      toast('"'+file.name+'" yüklendi: '+rows.length+' satır. Tabloyu ve ayraç (virgül/noktalı virgül/sekme) algısını kontrol etmeyi unutma.');
+    }catch(err){toast('Dosya okunamadı: '+err.message)}
+  };
+  reader.readAsText(file,'utf-8');
+  e.target.value='';
+};
+/* Boyut, α ve rapor */
+function ask(msg,btns,title){$('dlgc').innerHTML=`<h2>${title||'Uyarı'}</h2><p>${msg}</p><p>${btns}</p>`;$('dlg').hidden=false}
+const fa=x=>String(x).replace('.',',');
+function applySize(){
+  const r=Math.round(+$('nr').value),c=Math.round(+$('nc').value);
+  if(!(r>=2&&r<=1000&&c>=1&&c<=26)){ask('Satır sayısı 2–1000, sütun sayısı 1–26 arasında olmalı. (Satır sayısına değişken adı satırı da dahildir.)',`<button onclick='closeDlg()'>Tamam</button>`,'Geçersiz boyut');return}
+  const g=grid();let ur=0,uc=0;
+  g.forEach((row,i)=>{if(row)row.forEach((v,j)=>{if(v&&v.trim()!==''){ur=Math.max(ur,i+1);uc=Math.max(uc,j+1)}})});
+  window._sz=()=>{DR=r;DC=c;NR=r;NC=c;build();document.querySelectorAll('#g input').forEach(i=>{const v=(g[+i.dataset.r]||[])[+i.dataset.c];if(v!=null)i.value=v});commit();closeDlg()};
+  if(ur>r||uc>c)ask(`Girilmiş veri ${ur} satır ve ${uc} sütuna kadar uzanıyor. Boyutu küçültürsen sığmayan veriler silinir (Ctrl+Z ile geri alabilirsin). Devam edilsin mi?`,`<button onclick='_sz()'>Evet, küçült</button><button class='alt' onclick='closeDlg()'>Vazgeç</button>`,'Veri taşıyor');
+  else window._sz();
+}
+function alphaGate(next){
+  const raw=$('alpha').value.trim();window._an=next;
+  const def=`<button onclick='alphaUse(0.05)'>Evet, 0,05 ile devam et</button><button class='alt' onclick='alphaFix()'>Hayır, kendim gireceğim</button>`;
+  if(raw===''){ask('Anlamlılık düzeyi (α) kutusu boş bırakılmış. Varsayılan değer (0,05) kullanılsın mı?',def,'α değeri boş');return}
+  const a=toN(raw);
+  if(isNaN(a)||a<=0||a>=1){ask(`“${esc(raw)}” geçerli bir anlamlılık düzeyi değil (0 ile 1 arasında bir sayı olmalı, ör. 0,05). Varsayılan değer (0,05) kullanılsın mı?`,def,'Geçersiz α');return}
+  if(a>.1||a<.001){ask(`α = ${fa(a)} alışılmadık bir değer. Genelde 0,05 (bazen 0,01 ya da 0,10) kullanılır. 0,05 yerine yanlışlıkla ${fa(a)} yazmış olabilir misin?`,`<button onclick='alphaUse(${a})'>Yine de ${fa(a)} ile devam et</button><button class='alt' onclick='alphaUse(0.05)'>Varsayılan 0,05 kullan</button><button class='alt' onclick='alphaFix()'>Düzelteceğim</button>`,'Alışılmadık α değeri');return}
+  ALPHA=a;next();
+}
+function alphaUse(a){ALPHA=a;$('alpha').value=fa(a);closeDlg();const n=window._an;if(n)n()}
+function alphaFix(){closeDlg();$('alpha').focus();$('alpha').select()}
+const pf=p=>p==null||isNaN(p)?'–':p<.001?'< ,001':f(p,3).replace(/^0/,'');
+const rd=(v,d=2)=>Number.isFinite(v)?f(v,d):'–';
+const eff=(v,t)=>{v=Math.abs(v);return v<t[0]?'ihmal edilebilir':v<t[1]?'küçük':v<t[2]?'orta':'büyük'};
+function stx(a){const n=a.length,sa=srt(a),m=mean(a),s=n>1?sd(a):NaN,se=s/Math.sqrt(n),t=n>1?jStat.studentt.inv(.975,n-1):NaN;return{n,m,s,se,md:qt(sa,.5),mn:sa[0],mx:sa[n-1],q1:qt(sa,.25),q3:qt(sa,.75),sk:skew(a),kt:kurt(a),lo:m-t*se,hi:m+t*se}}
+function tbl(cap,head,rows){return `<div class='rtw'><div class='rtb'><button onclick='copyT(this)'>📋 Tabloyu kopyala</button></div><table class='rt'><caption>${cap}</caption><thead><tr>${head.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`}
+function toast(m){$('toast').textContent=m;$('toast').hidden=false;clearTimeout(window._tt);window._tt=setTimeout(()=>{$('toast').hidden=true},2800)}
+function lightSvg(s){return s.replace(/var\(--accent\)/g,'#2f6fed').replace(/var\(--text\)/g,'#222').replace(/var\(--muted\)/g,'#666').replace(/var\(--line\)/g,'#d8d4ca').replace(/var\(--bad\)/g,'#c0392b').replace("style='width:100%;max-width:540px;height:auto'","").replace('<svg ',"<svg xmlns='http://www.w3.org/2000/svg' width='1040' height='640' font-family='Arial,sans-serif' ")}
+function rasterFigs(){
+  FIGPNG=[];
+  (window._pg||[]).forEach((c,i)=>{
+    const img=new Image();
+    img.onload=()=>{const cv=document.createElement('canvas');cv.width=1040;cv.height=640;const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,1040,640);x.drawImage(img,0,0,1040,640);try{FIGPNG[i]=cv.toDataURL('image/png')}catch(e){}};
+    img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(lightSvg(c.svg));
+  });
+}
+function lightClone(node){
+  const w=document.createElement('div');w.style.cssText='position:fixed;left:-10000px;top:0;width:720px;background:#fff;color:#000;font-family:Arial,sans-serif;font-size:14px';
+  w.appendChild(node.cloneNode(true));
+  w.querySelectorAll('button,.rtb').forEach(x=>x.remove());
+  w.querySelectorAll('*').forEach(x=>{x.style.color='#000';x.style.background='transparent'});
+  w.querySelectorAll('table').forEach(t=>{t.style.borderCollapse='collapse';t.style.margin='4px 0 14px'});
+  w.querySelectorAll('td,th').forEach(x=>{x.style.border='1px solid #000';x.style.padding='4px 8px';x.style.textAlign='center'});
+  w.querySelectorAll('caption').forEach(x=>{x.style.textAlign='left';x.style.fontWeight='bold'});
+  w.querySelectorAll('[data-fi]').forEach(d=>{const u=FIGPNG[+d.dataset.fi];if(u)d.innerHTML="<img src='"+u+"' width='520'>"});
+  document.body.appendChild(w);return w;
+}
+function copyNode(n,msg){
+  const w=lightClone(n),r=document.createRange();r.selectNodeContents(w);const s=getSelection();s.removeAllRanges();s.addRange(r);
+  let ok=false;try{ok=document.execCommand('copy')}catch(e){}
+  s.removeAllRanges();w.remove();
+  toast(ok?msg:'Kopyalanamadı. İçeriği fareyle seçip Ctrl+C ile kopyalayabilirsin.');
+}
+function copyT(b){copyNode(b.closest('.rtw'),'Tablo kopyalandı. Word’e ya da başka bir belgeye yapıştırabilirsin.')}
+function copyFig(b){copyNode(b.closest('.fig'),'Grafik kopyalandı. Word’e yapıştırdığında görsel olarak gelmesi gerekir.')}
+function copyAll(){copyNode($('repb'),'Tüm rapor (tablolar ve grafikler dahil) kopyalandı. Word’e yapıştırabilirsin.')}
+function showMain(){$('rep').hidden=true;$('main').hidden=false}
+function openReport(){if(!RES)return;$('repb').innerHTML=buildReport();rasterFigs();$('main').hidden=true;$('rep').hidden=false;window.scrollTo(0,0);try{if(location.hash!=='#rapor')location.hash='rapor'}catch(e){}}
+function closeReport(){showMain();try{if(location.hash==='#rapor')location.hash=''}catch(e){}}
+addEventListener('hashchange',()=>{if(location.hash==='#rapor'){if($('rep').hidden&&RES)openReport()}else if(!$('rep').hidden)showMain()});
+const ptx=p=>p<.001?pf(p):'= '+pf(p);
+const pw=p=>p<.001?'binde birden bile düşük':'yaklaşık %'+f(p*100,p<.1?1:0);
+const tone=l=>({'ihmal edilebilir':'pratikte neredeyse hissedilmeyecek kadar küçük bir fark','küçük':'pratikte küçük bir fark','orta':'pratikte de fark edilir düzeyde bir fark','büyük':'pratikte de oldukça belirgin bir fark'}[l]||'');
+function buildReport(){
+  const R=RES,A=R.alpha,fA=fa(A),lv=fa(+(100*(1-A)).toFixed(1)),dec=p=>p<A?'Anlamlı (p &lt; α)':'Anlamlı değil (p ≥ α)';
+  const ah=['Test','İstatistik','sd','p','Etki büyüklüğü','Karar (α = '+fA+')'],dh=['Grup','n','Ort.','SS','SH','Medyan','Min','Maks','Q1','Q3','Çarpıklık','Basıklık','%95 GA'],nh=['Grup','n','Shapiro-Wilk W','p','K-S (Lilliefors) D','p','Karar yöntemi','Sonuç'];
+  const dr=(nm,a)=>{const s=stx(a);return[esc(nm),s.n,rd(s.m),rd(s.s),rd(s.se),rd(s.md),rd(s.mn),rd(s.mx),rd(s.q1),rd(s.q3),rd(s.sk),rd(s.kt),rd(s.lo)+' – '+rd(s.hi)]};
+  const nr=d=>[esc(d.name),d.n,d.sh?rd(d.sh.W,3):'–',d.sh?pf(d.sh.p):'–',d.ks?rd(d.ks.D,3):'–',d.ks?pf(d.ks.p):'–',d.useKS?'K-S':'S-W',d.normal?'Normal':'Normal değil'];
+  const warns=R.warn.flatMap(w=>w.replace(/<br>/g,'|').replace(/<[^>]+>/g,'').split('|')).filter(w=>w&&w!=='Sorun görünmüyor');
+  const warnH=warns.length?`<p>Verine bakarken dikkatimizi çeken birkaç şey oldu:</p><ul>${warns.map(w=>`<li>${w}</li>`).join('')}</ul><p>Bunları kaynağıyla karşılaştırıp gerekirse düzeltmek iyi olur.</p>`:`<p>Verinde göze batan bir sorun görmedik: sayısal sütunlarda yazım hatası, uç değer ya da karışık türde değer çıkmadı.</p>`;
+  const pg=chartPages(true);window._pg=pg;
+  const normExp=`<p>Klasik testlerin çoğu verinin çan eğrisine benzer biçimde dağıldığını varsayar. Bu varsayım tutmadığında testin verdiği p değerine güvenmek zorlaşır. O yüzden test seçmeden önce dağılıma baktık. Küçük gruplarda (n &lt; 30) Shapiro-Wilk, büyük gruplarda (n ≥ 30) Kolmogorov-Smirnov (Lilliefors) testini kullandık. Bu testlerde p değeri büyükse (p &gt; α) “normal dağılımdan ciddi bir sapma görmedik” demektir. Küçük örneklemde bu testler güçsüz, büyük örneklemde fazla titiz olabilir; o yüzden raporun sonundaki grafiklere de bakmanı öneririz.</p>`;
+  const normSum=(ds,ord)=>ord?'<p>Sonuç değişkeni sıralı olduğu için normallik sonuçlarına bakmadan sıralara dayanan bir test seçtik; yukarıdaki tablo yalnızca bilgi amaçlıdır.</p>':`<p>${ds.map(d=>`${esc(d.name)}: p = ${pf(d.useKS?d.ks&&d.ks.p:d.sh&&d.sh.p)}, yani ${d.normal?'normal dağılımla uyumlu görünüyor':'normal dağılımdan sapıyor'}.`).join('<br>')}</p>`;
+  const trP=R.tr?`<p>Veri normal dağılmadığı için ${R.tr==='log'?'logaritmik (log₁₀)':'karekök'} dönüşümü uyguladık. Bu işlem değerleri sıkıştırarak dağılımı çan eğrisine biraz yaklaştırır. Tablo 1 ham veriyi, sonraki tablolar ve grafikler dönüştürülmüş veriyi gösterir.</p>`:'';
+  let h=`<h1>İstatistik analiz raporu</h1><p class='note'>${new Date().toLocaleDateString('tr-TR')} · Anlamlılık düzeyi α = ${fA} · İstatistik Asistanı v${VER}</p>`;
+  if(R.type==='two'){
+    const[g1,g2]=R.D,W=R.W,M=R.M,par=R.par,s1=stx(g1.a),s2=stx(g2.a),n1=esc(g1.name),n2=esc(g2.name),p=par?W.p:M.p,sig=p<A;
+    const rawN=Math.max(...R.raw.map(g=>g.a.length)),el=par?eff(W.d,[.2,.5,.8]):eff(M.r,[.1,.3,.5]);
+    const rowT=['Bağımsız örneklem t testi (Welch)','t = '+rd(W.t),rd(W.df),pf(W.p),'d = '+rd(W.d),dec(W.p)],rowM=['Mann-Whitney U testi','U = '+rd(M.U,1)+'; z = '+rd(M.z),'–',pf(M.p),'r = '+rd(M.r),dec(M.p)];
+    const se=Math.sqrt(s1.s**2/s1.n+s2.s**2/s2.n),tcv=jStat.studentt.inv(1-A/2,W.df),dif=s1.m-s2.m;
+    const verdict=sig?`Bu olasılık seçtiğimiz eşiğin (${fA}) altında kaldığı için farkı <b>anlamlı</b> kabul ediyoruz.`:`Bu olasılık seçtiğimiz eşiğin (${fA}) altına inmediği için <b>anlamlı bir fark bulamadık</b>. Ama “fark bulamadık” demek “fark yok” demek değildir; özellikle gruplar küçükse test küçük farkları yakalayamayabilir.`;
+    h+=`<h2>Neye baktık?</h2><p>“${esc(R.dv)}” değerinin <b>${n1}</b> ve <b>${n2}</b> grupları arasında farklı olup olmadığını inceledik. Karşılaştırmayı ${par?'grupların ortalamaları':'grupların genel eğilimleri (medyanları)'} üzerinden yaptık. “Fark var” diyebilmek için kendimize bir eşik koyduk: α = ${fA}. P değeri bu eşiğin altında kalırsa farkı anlamlı sayacağız.</p>`;
+    h+=`<h2>Verine ilk bakış</h2>${warnH}`+tbl('Tablo 1. Ham veri',R.raw.map(g=>esc(g.name)),Array.from({length:rawN},(_,i)=>R.raw.map(g=>g.a[i]!=null?rd(g.a[i],2):'')))+tbl('Tablo 2. Betimsel istatistikler'+(R.tr?' (dönüştürülmüş veri)':''),dh,[dr(g1.name,g1.a),dr(g2.name,g2.a)])+`<p>${n1} grubunda ${s1.n} gözlem var; ortalaması ${rd(s1.m)}, medyanı ${rd(s1.md)}. ${n2} grubunda ${s2.n} gözlem var; ortalaması ${rd(s2.m)}, medyanı ${rd(s2.md)}.</p>`;
+    h+=`<h2>Veri normal dağılıyor mu?</h2>${normExp}${trP}`+tbl('Tablo 3. Normallik testleri',nh,[nr(g1),nr(g2)])+normSum(R.D,R.ord)+(R.ord?'':`<p>${par?'İki grup da normal dağılımla uyumlu olduğu için ortalamaları karşılaştıran klasik bir test kullanabiliriz.':'En az bir grupta normal dağılım tutmadığı için ortalamalar yerine sıralara bakan bir test daha güvenli.'}</p>`);
+    h+=`<h2>Hangi testi, neden seçtik?</h2>`+(R.ord?`<p>Sonuç değişkeni sıralı ölçekte olduğu için ortalama almak anlamlı değil. İki bağımsız grubu karşılaştırdığımızdan <b>Mann-Whitney U testi</b>ni seçtik. Bu test değerlerin kendisine değil, grup içindeki sıralarına bakar.</p>`:par?`<p>İki ayrı grubu karşılaştırıyoruz ve veri normal dağılıyor; bu yüzden <b>Welch t testi</b>ni seçtik. Bu test iki grubun ortalamasını kıyaslar. Gruplardaki yayılım (varyans) farklı olsa bile güvenle çalıştığı için klasik t testine göre daha sağlam bir seçimdir.</p>`:`<p>İki ayrı grubu karşılaştırıyoruz ama normal dağılım tutmadığı için ortalamalara dayanan t testi yerine <b>Mann-Whitney U testi</b>ni seçtik. Bu test değerlerin kendisine değil, grup içindeki sıralarına bakar; böylece dağılımın şekline ve uç değerlere karşı daha dayanıklıdır.</p>`)+tbl('Tablo 4. Analiz sonucu (seçilen test)',ah,[par?rowT:rowM])+tbl('Tablo 5. Alternatif test (bilgi amaçlı)',ah,[par?rowM:rowT]);
+    h+=`<h2>Sonuç ne diyor?</h2>`+(par?`<p>${n1} grubunun ortalaması ${rd(s1.m)}, ${n2} grubununki ${rd(s2.m)} çıktı; aradaki fark ${rd(dif)} (%${lv} güven aralığı: ${rd(dif-tcv*se)} ile ${rd(dif+tcv*se)} arası). Eğer gerçekte iki grup arasında hiçbir fark olmasaydı, buna benzer ya da daha büyük bir farkı görme olasılığımız ${pw(p)} olurdu (p ${ptx(p)}). ${verdict}</p>`:`<p>${n1} grubunun medyanı ${rd(s1.md)}, ${n2} grubununki ${rd(s2.md)} çıktı. Eğer gerçekte iki grubun değerleri aynı dağılımdan geliyor olsaydı, bu kadar ayrışmayı görme olasılığımız ${pw(p)} olurdu (p ${ptx(p)}). ${verdict}</p>`)+`<p>Fark ne kadar büyük? ${par?'Cohen d = '+rd(W.d):'r = '+rd(M.r)} ve bu <b>${el}</b> düzeyde bir etki: ${tone(el)}.${sig?'':' Anlamlı olmayan bir sonuçta etki büyüklüğüne fazla anlam yüklemeyelim; örneklem küçükse bu tahmin oynak olabilir.'}</p>`;
+    const tn=R.tr?(R.tr==='log'?'log₁₀ dönüştürülmüş veriyle, ':'karekök dönüştürülmüş veriyle, '):'';
+    h+=`<h2>Raporuna şöyle yazabilirsin</h2><p><i>${par?`${tn}Bağımsız örneklem t testi (Welch) sonucuna göre ${n1} grubunun ortalaması (M = ${rd(s1.m)}, SS = ${rd(s1.s)}), ${n2} grubunun ortalamasından (M = ${rd(s2.m)}, SS = ${rd(s2.s)}) ${sig?'istatistiksel olarak anlamlı biçimde farklıdır':'istatistiksel olarak anlamlı biçimde farklı değildir'}, t(${rd(W.df)}) = ${rd(W.t)}, p ${ptx(W.p)}, d = ${rd(W.d)}.`:`${tn}Mann-Whitney U testi sonucuna göre ${n1} (Mdn = ${rd(s1.md)}) ile ${n2} (Mdn = ${rd(s2.md)}) arasında ${sig?'istatistiksel olarak anlamlı bir fark vardır':'istatistiksel olarak anlamlı bir fark yoktur'}, U = ${rd(M.U,1)}, z = ${rd(M.z)}, p ${ptx(M.p)}, r = ${rd(M.r)}.`}</i></p>`;
+  }else if(R.type==='multi'){
+    const D=R.D,k=D.length,names=D.map(d=>esc(d.name)),M=R.main,sg=R.sg,mode=R.mode,rawN=Math.max(...R.raw.map(g=>g.a.length));
+    let tn=4;
+    const verdict=sg?`Bu olasılık seçtiğimiz eşiğin (${fA}) altında kaldığı için gruplar arasında <b>anlamlı bir fark</b> var diyoruz.`:`Bu olasılık seçtiğimiz eşiğin (${fA}) altına inmediği için <b>anlamlı bir fark bulamadık</b>. Ama “fark bulamadık” demek “gruplar eşit” demek değildir.`;
+    h+=`<h2>Neye baktık?</h2><p>“${esc(R.dv)}” değerinin ${k} grup (${names.join(', ')}) arasında farklılaşıp farklılaşmadığına baktık. “Fark var” diyebilmek için kendimize bir eşik koyduk: α = ${fA}.</p>`;
+    h+=`<h2>Verine ilk bakış</h2>${warnH}`+tbl('Tablo 1. Ham veri',R.raw.map(g=>esc(g.name)),Array.from({length:rawN},(_,i)=>R.raw.map(g=>g.a[i]!=null?rd(g.a[i],2):'')))+tbl('Tablo 2. Betimsel istatistikler'+(R.tr?' (dönüştürülmüş veri)':''),dh,D.map(d=>dr(d.name,d.a)));
+    h+=`<h2>Veri normal dağılıyor mu?</h2>${normExp}${trP}`+tbl('Tablo 3. Normallik testleri',nh,D.map(nr))+normSum(D,R.ord);
+    if(R.par)h+=`<h2>Gruplar benzer yayılıyor mu?</h2><p>ANOVA, grupların yayılımının (varyansının) birbirine benzer olduğunu da varsayar. Bunu Levene testiyle kontrol ettik. P değeri büyükse (p &gt; α) varyanslar benzer sayılır.</p>`+tbl('Tablo '+(tn++)+'. Varyansların eşitliği (Levene)',['F','sd1','sd2','p','Sonuç'],[[rd(R.lev.F),R.lev.df1,R.lev.df2,pf(R.lev.p),R.eq?'Varyanslar benzer':'Varyanslar farklı']]);
+    const why=R.ord?`Sonuç değişkeni sıralı olduğu için ortalamaya dayanan testler anlamlı değil; <b>Kruskal-Wallis H testi</b>ni seçtik. Bu test değerlerin sıralarına bakar.`:mode==='anova'?`Veri normal dağılıyor ve varyanslar benzer; bu yüzden <b>tek yönlü ANOVA</b>yı seçtik. ANOVA, grup ortalamalarından en az birinin diğerlerinden farklı olup olmadığını sorar.`:mode==='welch'?`Veri normal dağılıyor ama varyanslar benzer değil; bu durumda klasik ANOVA yanıltabilir, o yüzden <b>Welch ANOVA</b>yı seçtik.`:`En az bir grupta normal dağılım tutmadığı için ortalamalar yerine sıralara bakan <b>Kruskal-Wallis H testi</b>ni seçtik.`;
+    const mh=['Test','İstatistik','p','Etki büyüklüğü','Karar (α = '+fA+')'],mr=x=>[x.name,x.st,pf(x.p),x.en+' = '+rd(x.e,3),dec(x.p)];
+    h+=`<h2>Hangi testi, neden seçtik?</h2><p>${k} bağımsız grubu karşılaştırıyoruz. İkili testleri (t testi gibi) tekrar tekrar yapmak yanlış alarm ihtimalini artırır; bu yüzden tüm grupları tek seferde değerlendiren bir test kullanıyoruz. ${why}</p>`+tbl('Tablo '+(tn++)+'. Analiz sonucu (seçilen test)',mh,[mr(M)])+tbl('Tablo '+(tn++)+'. Alternatif testler (bilgi amaçlı)',mh,R.alts.map(mr));
+    h+=`<h2>Sonuç ne diyor?</h2><p>${M.st}, p ${ptx(M.p)}. Eğer gerçekte gruplar arasında hiçbir fark olmasaydı, bu kadar ayrışmayı görme olasılığımız ${pw(M.p)} olurdu. ${verdict} Etki büyüklüğü (${M.en} = ${rd(M.e,3)}) <b>${R.el}</b> düzeyde.</p>`;
+    if(R.post){
+      const sp=R.post.rows.filter(r=>r.pa<A);
+      h+=`<p>ANOVA ya da Kruskal-Wallis yalnızca “en az bir grup farklı” der, hangileri olduğunu söylemez. Bunu görmek için gruplar arasında ikili karşılaştırmalar yaptık (${R.post.meth}). Çok sayıda karşılaştırma yaparken yanlış alarm ihtimali arttığı için p değerlerini düzelttik.</p>`+tbl('Tablo '+(tn++)+'. İkili karşılaştırmalar',['Karşılaştırma',mode==='kw'?'z':'Ort. farkı','p','Düzeltilmiş p','Karar'],R.post.rows.map(r=>[esc(r.a)+' – '+esc(r.b),rd(r.st),pf(r.p),pf(r.pa),r.pa<A?'Anlamlı':'Anlamlı değil']))+`<p>${sp.length?'Düzeltmeden sonra anlamlı kalan çiftler: '+sp.map(r=>esc(r.a)+' – '+esc(r.b)).join(', ')+'.':'Düzeltmeden sonra hiçbir çift anlamlı kalmadı.'}</p>`;
+    }
+    h+=`<h2>Raporuna şöyle yazabilirsin</h2><p><i>${M.name} sonucuna göre gruplar arasında ${sg?'istatistiksel olarak anlamlı bir fark vardır':'istatistiksel olarak anlamlı bir fark yoktur'}, ${M.st}, p ${ptx(M.p)}, ${M.en} = ${rd(M.e,3)}.${R.post&&R.post.rows.some(r=>r.pa<A)?' İkili karşılaştırmalarda ('+R.post.meth+') '+R.post.rows.filter(r=>r.pa<A).map(r=>esc(r.a)+' ile '+esc(r.b)+' arasındaki fark anlamlı bulunmuştur (düzeltilmiş p '+ptx(r.pa)+').').join(' '):''}</i></p>`;
+  }else if(R.type==='chi'){
+    const O=R.O,rows=R.rows,cols=R.cols,C=R.C,M=R.main,sg=R.sg,n=C.n,both=R.both,zc=R.zc,key=R.key;
+    let tn=1;
+    const oh=['',...cols.map(esc),'Toplam'],obs=O.map((row,i)=>[esc(rows[i]),...row,C.rt[i]]).concat([['Toplam',...C.ct,n]]);
+    const pc=O.map((row,i)=>[esc(rows[i]),...row.map((v,j)=>rd(v/C.ct[j]*100,1)+'%')]),ex=C.E.map((row,i)=>[esc(rows[i]),...row.map(v=>rd(v,2))]);
+    const res=C.res.map((row,i)=>[esc(rows[i]),...row.map(v=>Math.abs(v)>zc?'<b>'+rd(v)+'</b>':rd(v))]);
+    const sp=[];C.res.forEach((row,i)=>row.forEach((v,j)=>{if(Math.abs(v)>zc)sp.push(`${esc(rows[i])} × ${esc(cols[j])} (gözlenen ${O[i][j]}, beklenen ${rd(C.E[i][j],1)}; beklenenden ${v>0?'fazla':'az'})`)}));
+    const mrow=x=>[x.name,x.st,String(x.df),pf(x.p),x.en+' = '+rd(x.e,3)+' ('+x.el+')',dec(x.p)];
+    const verdict=sg?`Bu olasılık seçtiğimiz eşiğin (${fA}) altında kaldığı için ${both?'iki değişken arasında anlamlı bir ilişki olduğunu':'değişkenlerin bağımsız olmadığını, yani aralarında anlamlı bir ilişki olduğunu'} söylüyoruz.`:`Bu olasılık seçtiğimiz eşiğin (${fA}) altına inmediği için <b>anlamlı bir ilişki bulamadık</b>. Ama “ilişki bulamadık” demek “ilişki yok” demek değildir; özellikle örneklem küçükse test zayıf kalır.`;
+    const why=both?`İki değişken de sıralı olduğu için kategorileri ayrı ayrı karşılaştıran ki-kare yerine, sıralamayı hesaba katan <b>Spearman sıra korelasyonunu</b> seçtik. Spearman değerlerin kendisine değil sıralarına bakar ve −1 ile +1 arasında bir değer verir: +1 “biri arttıkça diğeri hep artar”, −1 “biri arttıkça diğeri hep azalır”, 0 ise ilişki yok demektir. Doğrusal-doğrusal ki-kare aynı soruyu kategori sayılarıyla sorar; alternatif olarak verdik.`:key==='fisher'?`İki kategorili iki değişkenimiz var (2×2 tablo) ve beklenen sayılar küçük olduğu için ki-kare yanıltıcı olabilir. Bu durumda <b>Fisher kesin testi</b> daha güvenilirdir; p değerini yaklaşık hesaplamak yerine olası tüm tabloları sayarak doğrudan bulur.`:`Her iki değişken de kategorik olduğu için <b>Pearson ki-kare bağımsızlık testini</b> seçtik. Test, gözlediğimiz sayıların, iki değişken birbirinden bağımsız olsaydı bekleyeceğimiz sayılardan ne kadar saptığına bakar.`;
+    h+=`<h2>Neye baktık?</h2><p>“${esc(R.dv)}” ile “${esc(R.gv)}” arasında bir ilişki olup olmadığına baktık. ${both?'İki değişken de sıralı (örneğin anket maddeleri); bu yüzden “biri yükseldikçe diğeri de yükseliyor mu?” sorusuna odaklandık.':'İki değişken de kategorik; yani “bir gruptaki kategori dağılımı diğer gruptakinden farklı mı?” diye sorduk.'} Kararımızı α = ${fA} eşiğine göre vereceğiz.</p>`;
+    h+=`<h2>Verine ilk bakış</h2>${warnH}<p>Satırlarda “${esc(R.dv)}”, sütunlarda “${esc(R.gv)}” kategorileri var; analize toplam ${n} gözlem girdi.</p>`+tbl('Tablo '+(tn++)+'. Gözlenen sayılar (çapraz tablo)',oh,obs)+tbl('Tablo '+(tn++)+'. Sütun yüzdeleri',['',...cols.map(esc)],pc);
+    if(!both)h+=`<h2>Test varsayımı: beklenen sayılar yeterli mi?</h2><p>Ki-kare testi, beklenen sayıların yeterince büyük olmasını ister (kural: hücrelerin en çok %20’si 5’in altında olmalı, hiçbiri 1’in altına düşmemeli). Aşağıdaki tablo, iki değişken bağımsız olsaydı her hücrede kaç gözlem beklediğimizi gösterir.</p>`+tbl('Tablo '+(tn++)+'. Beklenen sayılar',['',...cols.map(esc)],ex)+`<p>En küçük beklenen sayı ${rd(C.minE,2)}; hücrelerin %${rd(C.low*100,0)}’inde beklenen sayı 5’in altında. ${R.lowW?'Bu, ki-kare için biraz fazla düşük; sonucu temkinli yorumlamak, mümkünse kategorileri birleştirmek iyi olur.':'Bu, ki-kare için yeterli görünüyor.'}</p>`;
+    h+=`<h2>Hangi testi, neden seçtik?</h2><p>${why}</p>`+tbl('Tablo '+(tn++)+'. Analiz sonucu (seçilen test)',ah,[mrow(M)])+tbl('Tablo '+(tn++)+'. Alternatif testler (bilgi amaçlı)',ah,R.alts.map(mrow));
+    h+=`<h2>Sonuç ne diyor?</h2>`+(both?`<p>${M.st}, p ${ptx(M.p)}. Eğer gerçekte iki değişken arasında hiçbir ilişki olmasaydı, bu kadar güçlü (ya da daha güçlü) bir korelasyonu görme olasılığımız ${pw(M.p)} olurdu. ${verdict} Korelasyonun gücü (|ρ| = ${rd(M.e,3)}) <b>${M.el}</b> düzeyde. ${sg?`Korelasyon ${M.r>0?'pozitif: biri yükseldikçe diğeri de yükselme eğiliminde.':'negatif: biri yükseldikçe diğeri azalma eğiliminde.'}`:''}</p>`:`<p>${M.st}, p ${ptx(M.p)}. Eğer iki değişken gerçekte bağımsız olsaydı, bu kadar büyük (ya da daha büyük) bir sapmayı görme olasılığımız ${pw(M.p)} olurdu. ${verdict} İlişkinin gücü (${M.en} = ${rd(M.e,3)}) <b>${M.el}</b> düzeyde.</p>`);
+    if(!both)h+=`<h2>Hangi hücreler öne çıkıyor?</h2><p>Test genel olarak “bir ilişki var mı?” sorusunu yanıtlar; ilişkinin nerede olduğunu düzeltilmiş standartlaştırılmış artıklar gösterir. |z| &gt; ${rd(zc)} olan hücreler (kalın) beklenenden belirgin biçimde fazla ya da az gözleme sahiptir.</p>`+tbl('Tablo '+(tn++)+'. Düzeltilmiş standartlaştırılmış artıklar',['',...cols.map(esc)],res)+`<p>${sp.length?'Öne çıkan hücreler: '+sp.join('; ')+'.':'Hiçbir hücre belirgin biçimde sapmıyor.'}</p>`;
+    h+=`<h2>Raporuna şöyle yazabilirsin</h2><p><i>${both?`Spearman sıra korelasyonu sonucuna göre “${esc(R.dv)}” ile “${esc(R.gv)}” arasında ${sg?'anlamlı bir':'anlamlı olmayan bir'} ilişki bulunmuştur, ${M.st}, p ${ptx(M.p)}.`:`${M.name} sonucuna göre “${esc(R.dv)}” ile “${esc(R.gv)}” arasında ${sg?'anlamlı bir ilişki vardır':'anlamlı bir ilişki yoktur'}, ${M.st}, p ${ptx(M.p)}, ${M.en} = ${rd(M.e,3)}.`}</i></p>`;
+  }else if(R.type==='corr'){
+    const pe=R.pe,sp=R.sp,n=R.n,sig=pe.p<A,el=eff(pe.r,[.1,.3,.5]);
+    const rowP=['Pearson korelasyonu','r = '+rd(pe.r,3),String(n-2),pf(pe.p),'r = '+rd(pe.r,3),dec(pe.p)],rowS=['Spearman sıra korelasyonu','ρ = '+rd(sp.r,3),String(n-2),pf(sp.p),'|ρ| = '+rd(Math.abs(sp.r),3),dec(sp.p)];
+    h+=`<h2>Neye baktık?</h2><p>“${esc(R.dv)}” ile “${esc(R.gv)}” arasında doğrusal bir ilişki olup olmadığına baktık. Karar eşiğimiz α = ${fA}.</p>`;
+    h+=`<h2>Verine ilk bakış</h2>${warnH}`+tbl('Tablo 1. Betimsel istatistikler',dh,[dr(R.dv,R.A),dr(R.gv,R.B)]);
+    h+=`<h2>Hangi testi, neden seçtik?</h2><p>İki değişken de ölçek düzeyinde olduğu için <b>Pearson korelasyon katsayısı</b>nı hesapladık. Bu katsayı, iki değişkenin birlikte ne kadar doğrusal değiştiğini özetler.</p>`+tbl('Tablo 2. Analiz sonucu (Pearson)',ah,[rowP])+tbl('Tablo 3. Alternatif (Spearman, bilgi amaçlı)',ah,[rowS]);
+    h+=`<h2>Sonuç ne diyor?</h2><p>r(${n-2}) = ${rd(pe.r,3)}, p ${ptx(pe.p)}, %95 güven aralığı [${rd(R.ciLo,3)}; ${rd(R.ciHi,3)}]. Eğer gerçekte hiçbir ilişki olmasaydı, bu kadar güçlü bir korelasyonu görme olasılığımız ${pw(pe.p)} olurdu. ${sig?`Bu olasılık eşiğimizin (${fA}) altında kaldığı için <b>anlamlı bir ilişki</b> olduğunu söylüyoruz.`:`Bu olasılık eşiğimizin (${fA}) altına inmediği için <b>anlamlı bir ilişki bulamadık</b>.`} İlişkinin gücü <b>${el}</b> düzeyde: ${tone(el)}. R² = ${rd(pe.r*pe.r,3)}, yani “${esc(R.gv)}”deki değişimin yaklaşık %${rd(pe.r*pe.r*100,0)}’i “${esc(R.dv)}” ile birlikte açıklanabiliyor (bu, nedensellik anlamına gelmez).</p>`;
+    h+=`<h2>Raporuna şöyle yazabilirsin</h2><p><i>Pearson korelasyon analizi sonucuna göre “${esc(R.dv)}” ile “${esc(R.gv)}” arasında ${sig?'istatistiksel olarak anlamlı bir ilişki bulunmuştur':'istatistiksel olarak anlamlı bir ilişki bulunmamıştır'}, r(${n-2}) = ${rd(pe.r,3)}, p ${ptx(pe.p)}.</i></p>`;
+  }else{
+    const d=R.d,n=R.n,mu=R.mu,par=R.par,p=par?R.pt:(R.Wx?R.Wx.p:1),sig=p<A,s=stx(R.a);
+    const el=par?eff(R.cd,[.2,.5,.8]):(R.Wx?eff(R.Wx.r,[.1,.3,.5]):'–');
+    const rowT=['Tek örneklem t testi (μ₀ = '+fa(mu)+')','t = '+rd(R.t),String(n-1),pf(R.pt),'d = '+rd(R.cd),dec(R.pt)],rowW=R.Wx?['Tek örneklem Wilcoxon işaretli sıra testi (μ₀ = '+fa(mu)+')','W = '+rd(R.Wx.W,1)+'; z = '+rd(R.Wx.z),'–',pf(R.Wx.p),'r = '+rd(R.Wx.r),dec(R.Wx.p)]:['Wilcoxon işaretli sıra testi','hesaplanamadı','–','–','–','–'];
+    const verdict=sig?`Bu olasılık seçtiğimiz eşiğin (${fA}) altında kaldığı için farkı <b>anlamlı</b> kabul ediyoruz.`:`Bu olasılık seçtiğimiz eşiğin (${fA}) altına inmediği için <b>anlamlı bir fark bulamadık</b>; bu, değerin ${fa(mu)} değerine eşit olduğunu kanıtlamaz.`;
+    h+=R.paired?`<h2>Neye baktık?</h2><p>Aynı birimlerin “${esc(R.pairNames.a)}” ve “${esc(R.pairNames.b)}” olarak iki kez ölçülen değerlerini karşılaştırdık; her birimin kendi farkını (“${esc(R.pairNames.a)}” − “${esc(R.pairNames.b)}”) alıp bu farkın sıfırdan anlamlı biçimde uzaklaşıp uzaklaşmadığına baktık. Karar eşiğimiz α = ${fA}.</p>`:`<h2>Neye baktık?</h2><p>“${esc(R.name)}” değişkeninin ${par?'ortalamasını':'merkezini (medyanını)'} <b>${fa(mu)}</b> değeriyle kıyasladık. Bu değer senin seçtiğin bir referans olmalı (örneğin bir norm ya da ölçeğin orta noktası); anlamlı bir değer girmediysen bu karşılaştırma pek bir şey söylemez. Karar eşiğimiz α = ${fA}.</p>`;
+    h+=`<h2>Verine ilk bakış</h2>${warnH}`+tbl('Tablo 1. Ham veri',[esc(R.name)],R.a.map(v=>[rd(v,2)]))+tbl('Tablo 2. Betimsel istatistikler',dh,[dr(R.name,R.a)])+`<p>${n} gözlemin ortalaması ${rd(s.m)}, medyanı ${rd(s.md)}, standart sapması ${rd(s.s)}. Ortalama için %95 güven aralığı ${rd(s.lo)} ile ${rd(s.hi)} arasında.</p>`;
+    h+=`<h2>Veri normal dağılıyor mu?</h2>${normExp}`+tbl('Tablo 3. Normallik testi',nh,[nr(d)])+normSum([d],R.ord)+(R.ord?'':`<p>${par?'Veri normal dağılımla uyumlu olduğu için ortalamaya dayanan klasik test kullanılabilir.':'Normal dağılım tutmadığı için ortalama yerine sıralara bakan bir test daha güvenli.'}</p>`);
+    h+=`<h2>Hangi testi, neden seçtik?</h2>`+(R.ord?`<p>Değişken sıralı ölçekte olduğu için ortalama almak anlamlı değil; tek bir değişkeni referans değerle karşılaştırmak için sıra tabanlı <b>Wilcoxon işaretli sıra testi</b>ni seçtik.</p>`:par?`<p>Tek bir değişkeni bilinen bir referans değerle karşılaştırdığımız ve veri normal dağıldığı için <b>tek örneklem t testi</b>ni seçtik. Bu test, örneğin ortalamasının referans değerden tesadüfle açıklanamayacak kadar uzak olup olmadığına bakar.</p>`:`<p>Tek bir değişkeni referans değerle karşılaştırıyoruz ama normal dağılım tutmadığı için t testi yerine <b>Wilcoxon işaretli sıra testi</b>ni seçtik. Bu test, değerlerin referanstan ne kadar uzak olduğunu sıralar üzerinden değerlendirir; dağılımın şekline daha az duyarlıdır.</p>`)+tbl('Tablo 4. Analiz sonucu (seçilen test)',ah,[par?rowT:rowW])+tbl('Tablo 5. Alternatif test (bilgi amaçlı)',ah,[par?rowW:rowT]);
+    h+=`<h2>Sonuç ne diyor?</h2>`+(par?`<p>Örneğin ortalaması ${rd(s.m)}, referans değerimiz ${fa(mu)}. Eğer gerçekte ortalama ${fa(mu)} olsaydı, bizimki kadar uzak bir örnek ortalaması görme olasılığımız ${pw(R.pt)} olurdu (p ${ptx(R.pt)}). ${verdict}</p><p>Fark ne kadar büyük? Cohen d = ${rd(R.cd)} ve bu <b>${el}</b> düzeyde bir etki: ${tone(el)}.</p>`:`<p>Örneğin medyanı ${rd(s.md)}, referans değerimiz ${fa(mu)}. Eğer gerçekte merkez ${fa(mu)} olsaydı, bu kadar uzak bir sonucu görme olasılığımız ${pw(p)} olurdu (p ${ptx(p)}). ${verdict}</p>${R.Wx?`<p>Fark ne kadar büyük? r = ${rd(R.Wx.r)} ve bu <b>${el}</b> düzeyde bir etki: ${tone(el)}.</p>`:''}`);
+    h+=`<h2>Raporuna şöyle yazabilirsin</h2><p><i>${par?`Tek örneklem t testi sonucuna göre “${esc(R.name)}” ortalaması (M = ${rd(s.m)}, SS = ${rd(s.s)}), ${fa(mu)} değerinden ${sig?'istatistiksel olarak anlamlı biçimde farklıdır':'istatistiksel olarak anlamlı biçimde farklı değildir'}, t(${n-1}) = ${rd(R.t)}, p ${ptx(R.pt)}, d = ${rd(R.cd)}.`:`Wilcoxon işaretli sıra testi sonucuna göre “${esc(R.name)}” medyanı (Mdn = ${rd(s.md)}), ${fa(mu)} değerinden ${sig?'istatistiksel olarak anlamlı biçimde farklıdır':'istatistiksel olarak anlamlı biçimde farklı değildir'}${R.Wx?`, W = ${rd(R.Wx.W,1)}, z = ${rd(R.Wx.z)}, p ${ptx(R.Wx.p)}, r = ${rd(R.Wx.r)}`:''}.`}</i></p>`;
+  }
+  h+=`<h2>Aklında bulunsun</h2><ul><li>P değeri farkın var olup olmadığını, etki büyüklüğü ise ne kadar büyük olduğunu söyler. İkisine birlikte bakmak gerekir.</li><li>Testler gözlemlerin birbirinden bağımsız olduğunu varsayar. Bunu program göremez; çalışmanın tasarımına bakarak sen karar vermelisin.</li><li>Aynı veriyle çok sayıda test denemek yanlış alarm ihtimalini artırır. Hangi testi yapacağını sonuca bakmadan önce belirlemek en güvenlisi.</li><li>Bu araç hâlâ gelişiyor. Sonuçları yayımlamadan önce R ya da SPSS ile doğrulamayı unutma.</li></ul>`;
+  h+=`<h2>Grafikler</h2><p>Sayılar her şeyi anlatmaz; grafikler dağılımın şeklini, uç değerleri ve grupların birbirine göre konumunu gösterir. Her grafiğin altında nasıl okunacağını yazdık.</p>`+pg.map((c,i)=>`<div class='fig'><div class='rtb'><button onclick='copyFig(this)'>📋 Grafiği kopyala</button></div><div data-fi='${i}'>${c.svg}</div><div class='cap'><b>Şekil ${i+1}.</b> ${esc(c.t)}. ${c.cap}</div></div>`).join('');
+  return h;
+}
+$('sample').onclick=openSample;
+function closeDlg(){$('dlg').hidden=true}
+/* Örnek veri penceresi */
+function openSample(){
+  $('dlgc').innerHTML=`<h2>Örnek veri oluştur</h2><p class='note'>Nasıl bir veri istediğini seç; rastgele bir veri üretilip tabloya yüklenir. Mevcut veri silinir (Ctrl+Z ile geri alabilirsin).</p>
+<table>
+<tr><td>Veri türü</td><td><select id='sd_t'><option value='1'>Tek değişkenli</option><option value='2' selected>İki bağımsız grup</option><option value='3'>Üç bağımsız grup</option></select></td></tr>
+<tr><td>Gözlem sayısı (grup başına)</td><td><input id='sd_n' type='number' min='3' max='200' value='20'></td></tr>
+<tr><td>Dağılım</td><td><select id='sd_d'><option value='n'>Normal dağılıyor</option><option value='s'>Normal dağılmıyor (sağa çarpık)</option></select></td></tr>
+</table>
+<p><button onclick='makeSample()'>Veriyi oluştur</button><button class='alt' onclick='demoSet();closeDlg()'>Hazır eğitim örneği</button><button class='alt' onclick='closeDlg()'>Vazgeç</button></p>
+<p class='note'>Hazır eğitim örneği küçük bir iki grup verisidir. Bilerek bir uç değer ve bir yazım hatası içerir, böylece veri kontrolü uyarılarını görebilirsin.</p>`;
+  $('dlg').hidden=false;
+}
+function rnd(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function makeSample(){
+  const k=+$('sd_t').value,n=Math.max(3,Math.min(200,+$('sd_n').value||20)),skw=$('sd_d').value==='s',names=k===3?['Kontrol','Deney 1','Deney 2']:['Kontrol','Deney'];
+  const gen=sh=>{let z=rnd();if(skw){const q=.8;z=(Math.exp(q*z)-Math.exp(q*q/2))/Math.sqrt((Math.exp(q*q)-1)*Math.exp(q*q))}return +(50+10*(z+sh)).toFixed(1)};
+  const rows=[k===1?['Puan']:['Grup','Puan']];
+  for(let g=0;g<k;g++)for(let i=0;i<n;i++){const v=String(gen(g*.8));rows.push(k===1?[v]:[names[g],v])}
+  NR=Math.max(DR,rows.length+2);NC=Math.max(DC,2);fill(rows);commit();closeDlg();
+}
+/* Tek değişkenli analiz */
+function kurt(a){const n=a.length;if(n<4)return NaN;const m=mean(a),s=sd(a);if(!s)return NaN;return n*(n+1)/((n-1)*(n-2)*(n-3))*a.reduce((t,x)=>t+((x-m)/s)**4,0)-3*(n-1)**2/((n-2)*(n-3))}
+function wilc1(a,mu){const d=a.map(x=>x-mu).filter(x=>x!==0),n=d.length;if(n<1)return null;const{r,ties}=ranks(d.map(x=>Math.abs(x)));let Wp=0;d.forEach((x,i)=>{if(x>0)Wp+=r[i]});const m0=n*(n+1)/4,v=n*(n+1)*(2*n+1)/24-ties/48,z=Math.max(0,Math.abs(Wp-m0)-.5)/Math.sqrt(v);return{W:Wp,n,z,p:2*(1-jStat.normal.cdf(z,0,1)),r:z/Math.sqrt(n)}}
+function runUni(){
+  const dv=S[+$('dv').value],mu=parseFloat($('mu0').value)||0,ord=dv.type==='ord';
+  if(dv.type==='nom'){runFreq(dv);return}
+  const a=dv.vals.map(x=>dv.type==='num'?toN(x.v):(dv.map&&dv.map[x.v]?dv.map[x.v].code:NaN)).filter(x=>!isNaN(x));
+  if(a.length<3||!sd(a)){$('out').innerHTML="<div class='card'><p class='b'>Analiz için en az 3 gözlem ve birbirinden farklı değerler gerekir.</p></div>";return}
+  uniCore(dv.name,a,mu,ord,[warnCol(dv)],false,null);
+}
+function runPaired(dv,gv){
+  const byRow={};dv.vals.forEach(x=>{const n=toN(x.v);if(!isNaN(n))byRow[x.row]=n});
+  const diffs=[];gv.vals.forEach(x=>{const n=toN(x.v);if(isNaN(n)||byRow[x.row]==null)return;diffs.push(byRow[x.row]-n)});
+  if(diffs.length<3||!sd(diffs)){$('out').innerHTML="<div class='card'><p class='b'>Eşleştirilmiş karşılaştırma için her iki sütunda da aynı satırda eksiksiz dolu en az 3 çift ve birbirinden farklı farklar gerekir.</p></div>";return}
+  uniCore(`Fark (${esc(dv.name)} − ${esc(gv.name)})`,diffs,0,false,[warnCol(dv),warnCol(gv)],true,{a:dv.name,b:gv.name});
+}
+function uniCore(label,a,mu,ord,warnArr,isPaired,pairNames){
+  const d=describe(label,a),n=a.length,m=d.m,s=d.s,se=s/Math.sqrt(n),sa=srt(a),q1=qt(sa,.25),q3=qt(sa,.75),tc=jStat.studentt.inv(.975,n-1),sk=skew(a),kt=kurt(a),par=!ord&&d.normal;
+  const t=(m-mu)/se,pt=2*(1-jStat.studentt.cdf(Math.abs(t),n-1)),cd=(m-mu)/s,Wx=wilc1(a,mu),ci=[m-tc*se,m+tc*se],sig=p=>p<ALPHA?"<span class='o'>İstatistiksel olarak anlamlı fark var (α = "+fa(ALPHA)+").</span>":"<span class='w'>Anlamlı fark bulunamadı. Bu, değerin μ₀’a eşit olduğunu kanıtlamaz; örneklem küçükse güç düşük olabilir.</span>";
+  const tT=`t(${n-1}) = ${f(t,2)}, p ${pt<.001?'< ,001':'= '+f(pt,3)}, Cohen d = ${f(cd,2)}`,tW=Wx?`W = ${f(Wx.W,1)}, z = ${f(Wx.z,2)}, p ${Wx.p<.001?'< ,001':'= '+f(Wx.p,3)}, r = ${f(Wx.r,2)}`:'tüm değerler μ₀’a eşit, test yapılamaz';
+  const pairIntro=isPaired?`<div class='card'><h2>3) Eşleştirilmiş karşılaştırma</h2><p>Aynı birimlerin “${esc(pairNames.a)}” ve “${esc(pairNames.b)}” olarak iki kez ölçülen değerlerini karşılaştırıyoruz. Bağımsız gruplar gibi davranmak yanlış sonuç verir; doğru yol her birimin kendi farkını (“${esc(pairNames.a)}” − “${esc(pairNames.b)}”) alıp bu farkın sıfırdan anlamlı şekilde uzaklaşıp uzaklaşmadığına bakmaktır. Eşleştirilmiş t testi (ya da Wilcoxon işaretli sıra testi) tam olarak bunu yapar.</p></div>`:'';
+  let h=pairIntro+`<div class='card'><h2>${isPaired?'4':'3'}) Betimsel istatistikler ve normallik</h2><div class='sc'><table><tr><th>n</th><th>Ort.</th><th>SS</th><th>SH</th><th>Medyan</th><th>Min</th><th>Maks</th><th>Q1</th><th>Q3</th><th>Çarpıklık</th><th>Basıklık</th><th>%95 GA (ort.)</th></tr><tr><td>${n}</td><td>${f(m,2)}</td><td>${f(s,2)}</td><td>${f(se,2)}</td><td>${f(d.md,2)}</td><td>${f(sa[0],2)}</td><td>${f(sa[n-1],2)}</td><td>${f(q1,2)}</td><td>${f(q3,2)}</td><td>${f(sk,2)}</td><td>${f(kt,2)}</td><td>${f(ci[0],2)} – ${f(ci[1],2)}</td></tr></table></div>
+<h3>Normallik</h3><p>Parametrik testler ${isPaired?'farkların':'verinin'} normal dağıldığını varsayar, bu yüzden önce bunu sınarız. H₀: ${isPaired?'farklar':'veri'} normal dağılımdan gelir. p &gt; α ise normallikten sapma kanıtlanamamıştır.</p><div class='sc'><table><tr><th>Shapiro-Wilk</th><th>Kolmogorov-Smirnov (Lilliefors)</th><th>Aykırı</th><th>Karar</th></tr><tr><td>${d.sh?`W=${f(d.sh.W)}, p=${fp(d.sh.p)}`:'–'}</td><td>${d.ks?`D=${f(d.ks.D)}, p=${fp(d.ks.p)}`:'n&lt;5'}</td><td>${d.o.ext.length?"<span class='b'>uç: "+d.o.ext.map(x=>f(x,1)).join(', ')+'</span>':d.o.mild.length?"<span class='w'>"+d.o.mild.map(x=>f(x,1)).join(', ')+'</span>':'yok'}</td><td>${d.normal?"<span class='o'>Normal</span>":"<span class='b'>Normal değil</span>"} <span class='note'>(${d.useKS?'KS':'SW'})</span></td></tr></table></div>
+${ord?"<div class='box'><b>Sıralı değişken:</b> Normallik varsayımı aranmaz; test ölçek düzeyine göre seçilir. Normallik sonuçları yalnızca bilgi içindir.</div>":''}<div class='box'><b>Kural:</b> n &lt; 30 ise karar Shapiro-Wilk ile, n ≥ 30 ise Kolmogorov-Smirnov (Lilliefors) ile verilir. Büyük örneklemde çok küçük sapmalar bile anlamlı çıkabilir; histogram ve Q-Q grafiğine de bak.</div>${d.o.ext.length?"<p class='b'>⚠️ Uç değer var: veri giriş hatası olabilir. Kaynağa bakıp doğrula; gerçek bir gözlemse silme, sonuçları hem değerle hem değersiz karşılaştır.</p>":''}</div>
+<div class='card'><h2>${isPaired?'5':'4'}) Seçilen test</h2><div class='box'><b>${isPaired?(par?'Eşleştirilmiş örneklem t testi':'Wilcoxon işaretli sıra testi (eşleştirilmiş)'):(par?'Tek örneklem t testi':'Tek örneklem Wilcoxon işaretli sıra testi')}</b></div>
+<h3>Neden bu test?</h3><ul><li>${isPaired?`İki eşleştirilmiş ölçümün farkının (“${esc(label)}”) ${par?'ortalamasını':'merkezini (medyan)'} sıfırla karşılaştırıyoruz. Bu bir eşleştirilmiş örneklem karşılaştırmasıdır.`:`Tek bir sayısal değişkenin (“${esc(label)}”) ${par?'ortalamasını':'merkezini (medyan)'} belirli bir değerle (μ₀ = ${fm(mu)}) karşılaştırıyoruz. Bu bir tek örneklem karşılaştırmasıdır.`}</li><li>${ord?'Değişken sıralı ölçekte olduğu için ortalama ve t testi anlamsızdır; sıralara dayanan test seçildi.':par?'Veri normallik varsayımını bozmadığı için parametrik test uygundur.':'Normallik reddedildiği için dağılım varsayımı gerektirmeyen, sıra tabanlı test seçildi.'}</li></ul>
+<h3>Ne işe yarar?</h3><p>${par?`H₀: ${isPaired?'Farkların ortalaması':'Ortalama'} 0’a eşittir.`:`H₀: ${isPaired?'Farkların medyanı':'Dağılımın merkezi (medyan)'} 0’a eşittir.`} p &lt; α ise ${isPaired?'gözlenen fark':'gözlenen değer'} 0’dan tesadüfle açıklanamayacak kadar uzaktır.</p><h3>Sonuç</h3><p>${par?tT:tW}. ${par?`Ortalama = ${f(m,2)}, %95 GA [${f(ci[0],2)}; ${f(ci[1],2)}].`:`Medyan = ${f(d.md,2)}.`}</p><p>${sig(par?pt:(Wx?Wx.p:1))}</p>
+<p class='note'>${isPaired?'Etki büyüklüğü için kabaca: d ≈ 0,2 küçük, 0,5 orta, 0,8 büyük.':'μ₀ varsayılan olarak 0’dır. Anlamlı bir karşılaştırma değeri (norm, ölçek orta noktası, literatür ortalaması) girmediysen test sonucu anlamsız olabilir; yalnızca betimleme istiyorsan bu bölümü yok say. Etki büyüklüğü için kabaca: d ≈ 0,2 küçük, 0,5 orta, 0,8 büyük.'}</p></div>
+<div class='card'><h2>${isPaired?'6':'5'}) Alternatifler</h2><ul><li><b>${par?'Wilcoxon işaretli sıra testi':(isPaired?'Eşleştirilmiş örneklem t testi':'Tek örneklem t testi')}</b>: ${par?tW:tT}. ${par?'Normallikten şüphe duyuyorsan ya da uç değerlerin etkisini görmek istiyorsan bakılır.':'Normallik sağlansaydı kullanılacak testti. Büyük örneklemde merkezi limit teoremi nedeniyle genelde sağlam çalışır, ama kararlarını gerekçesiyle ver.'}</li><li><b>İşaret testi</b>: En az varsayım isteyen test; yalnızca ${isPaired?'farkların':'değerlerin'} yönüne bakar, gücü düşüktür (bu sürümde yok).</li><li><b>Bootstrap güven aralığı</b>: Dağılım varsayımı istemez (bu sürümde yok).</li></ul><p class='note'>Bu araç henüz geliştirme aşamasında. Sonuçları yayımlamadan önce R ya da SPSS ile doğrula.</p></div>`;
+  CH={type:'uni',a,name:label,mu};
+  RES={type:'uni',name:label,a,mu,d,par,ord,t,pt,cd,Wx,ci,n,alpha:ALPHA,warn:warnArr,paired:!!isPaired,pairNames};
+  h+="<div class='card'><button onclick='openCharts()'>📈 Grafikler (normallik ve analiz)</button> <button onclick='openReport()'>📄 Tüm analizi detaylı gör</button></div>";
+  $('out').innerHTML=h;$('out').scrollIntoView({behavior:'smooth'});
+}
+function runCorr(dv,gv){
+  const byRow={};dv.vals.forEach(x=>{const n=toN(x.v);if(!isNaN(n))byRow[x.row]=n});
+  const A=[],B=[];gv.vals.forEach(x=>{const n=toN(x.v);if(isNaN(n)||byRow[x.row]==null)return;A.push(byRow[x.row]);B.push(n)});
+  if(A.length<4||!sd(A)||!sd(B)){$('out').innerHTML="<div class='card'><p class='b'>Korelasyon için her iki sütunda da aynı satırda eksiksiz dolu en az 4 çift ve değişkenlik gerekir.</p></div>";return}
+  const pe=pears(A,B),sp=spear(A,B),n=A.length;
+  const zf=Math.atanh(Math.max(-0.999999,Math.min(0.999999,pe.r))),sez=1/Math.sqrt(n-3),zc=1.959963984540054;
+  const ciLo=Math.tanh(zf-zc*sez),ciHi=Math.tanh(zf+zc*sez);
+  const mx=mean(A),my=mean(B),sxA=sd(A),syA=sd(B),b1=sxA?pe.r*(syA/sxA):0,b0=my-b1*mx,r2=pe.r*pe.r;
+  const oA=outl(A),oB=outl(B),el=eff(pe.r,[.1,.3,.5]),sig=pe.p<ALPHA;
+  let h=`<div class='card'><h2>3) Betimsel bakış ve saçılım</h2><p>“${esc(dv.name)}” ile “${esc(gv.name)}” arasındaki ilişkiye baktık. Analize ${n} eksiksiz çift girdi.</p>${(oA.ext.length||oB.ext.length)?`<p class='b'>⚠️ ${oA.ext.length?esc(dv.name)+' değişkeninde uç değer var ('+oA.ext.map(x=>f(x,1)).join(', ')+'). ':''}${oB.ext.length?esc(gv.name)+' değişkeninde uç değer var ('+oB.ext.map(x=>f(x,1)).join(', ')+'). ':''}Pearson korelasyonu uç değerlere karşı duyarlıdır; bu değerleri kontrol et, gerekirse Spearman sonucuna bak.</p>`:''}</div>
+<div class='card'><h2>4) Seçilen test</h2><div class='box'><b>Pearson korelasyon katsayısı</b></div>
+<h3>Neden bu test?</h3><ul><li>İki ölçek düzeyinde değişken arasında doğrusal bir ilişki olup olmadığını soruyoruz.</li><li>Pearson r, iki değişkenin birlikte ne kadar doğrusal değiştiğini −1 ile +1 arasında özetler; +1 mükemmel pozitif, −1 mükemmel negatif, 0 ilişkisiz demektir.</li></ul>
+<h3>Sonuç</h3><p>r(${n-2}) = ${f(pe.r,3)}, p ${pe.p<.001?'< ,001':'= '+f(pe.p,3)}, %95 GA [${f(ciLo,3)}; ${f(ciHi,3)}]. R² = ${f(r2,3)} (varyansın yaklaşık %${f(r2*100,0)}’i diğer değişkenle birlikte açıklanıyor).</p>
+<p>${sig?`<span class='o'>İstatistiksel olarak anlamlı bir ilişki var (α = ${fa(ALPHA)}).</span>`:`<span class='w'>Anlamlı bir ilişki bulunamadı. Bu, ilişkinin olmadığını kanıtlamaz.</span>`} Etki büyüklüğü <b>${el}</b> düzeyde.</p>
+<p class='note'>Betimleyici regresyon doğrusu: ${esc(gv.name)} ≈ ${f(b0,2)} ${b1>=0?'+':'−'} ${f(Math.abs(b1),3)} × ${esc(dv.name)}. (Bu tek değişkenli bir özet; çoklu regresyon bu sürümde yok.)</p></div>
+<div class='card'><h2>5) Alternatifler</h2><ul><li><b>Spearman sıra korelasyonu</b>: ρ = ${f(sp.r,3)}, p ${sp.p<.001?'< ,001':'= '+f(sp.p,3)}. İlişki doğrusal değilse ya da uç değerler varsa Pearson yerine buna bakılır.</li><li><b>Çoklu doğrusal regresyon</b>: Birden fazla açıklayıcı değişken eklemek istersen gerekir (bu sürümde yok).</li></ul><p class='note'>Korelasyon nedensellik göstermez. Bu araç henüz geliştirme aşamasında; sonuçları yayımlamadan önce R ya da SPSS ile doğrula.</p></div>
+<div class='card'><button onclick='openCharts()'>📈 Grafikler (saçılım)</button> <button onclick='openReport()'>📄 Tüm analizi detaylı gör</button></div>`;
+  CH={type:'corr',A,B,xn:dv.name,yn:gv.name,b0,b1};
+  RES={type:'corr',dv:dv.name,gv:gv.name,A,B,pe,sp,ciLo,ciHi,b0,b1,r2,n,alpha:ALPHA,warn:[warnCol(dv),warnCol(gv)]};
+  $('out').innerHTML=h;$('out').scrollIntoView({behavior:'smooth'});
+}
+function chScatter(A,B,xn,yn,b0,b1){
+  const W=520,H=320,P={l:46,r:14,t:14,b:42},x0=Math.min(...A),x1=Math.max(...A),y0=Math.min(...B),y1=Math.max(...B),px=(x1-x0)*.08||1,py=(y1-y0)*.08||1;
+  const Aa=ax(W,H,P,x0-px,x1+px,y0-py,y1+py,xn,yn);
+  let s=Aa.s;
+  A.forEach((v,i)=>{s+=`<circle cx='${Aa.sx(v)}' cy='${Aa.sy(B[i])}' r='3.5' style='fill:var(--accent);opacity:.7'/>`});
+  const lx0=x0-px,lx1=x1+px;
+  s+=`<line x1='${Aa.sx(lx0)}' y1='${Aa.sy(b0+b1*lx0)}' x2='${Aa.sx(lx1)}' y2='${Aa.sy(b0+b1*lx1)}' stroke='var(--bad)' stroke-width='2'/>`;
+  return svg(W,H,s);
+}function anova(gs){const k=gs.length,N=gs.reduce((s,a)=>s+a.length,0),gm=mean(gs.flat());let ssb=0,ssw=0;gs.forEach(a=>{const m=mean(a);ssb+=a.length*(m-gm)**2;a.forEach(x=>{ssw+=(x-m)**2})});const df1=k-1,df2=N-k,F=(ssb/df1)/(ssw/df2);return{F,df1,df2,p:1-jStat.centralF.cdf(F,df1,df2),eta:ssb/(ssb+ssw),mse:ssw/df2}}
+function levene(gs){return anova(gs.map(a=>{const m=mean(a);return a.map(x=>Math.abs(x-m))}))}
+function wanova(gs){const k=gs.length,n=gs.map(a=>a.length),m=gs.map(mean),v=gs.map(a=>sd(a)**2),w=n.map((x,i)=>x/v[i]),W=w.reduce((a,b)=>a+b,0),mw=w.reduce((s,x,i)=>s+x*m[i],0)/W,num=w.reduce((s,x,i)=>s+x*(m[i]-mw)**2,0)/(k-1),Lq=w.reduce((s,x,i)=>s+(1-x/W)**2/(n[i]-1),0),den=1+2*(k-2)/(k*k-1)*Lq,F=num/den,df2=(k*k-1)/(3*Lq);return{F,df1:k-1,df2,p:1-jStat.centralF.cdf(F,k-1,df2)}}
+function kw(gs){const all=gs.flat(),N=all.length,{r,ties}=ranks(all);let i0=0,H=0;gs.forEach(a=>{let s=0;for(let j=0;j<a.length;j++)s+=r[i0+j];i0+=a.length;H+=s*s/a.length});H=12/(N*(N+1))*H-3*(N+1);const c=1-ties/(N**3-N);if(c>0)H/=c;const df=gs.length-1;return{H,df,p:1-jStat.chisquare.cdf(H,df),eps:H/(N-1)}}
+function postHoc(mode,gs,names,AN){
+  const k=gs.length,m=k*(k-1)/2,rows=[];let meth='';
+  if(mode==='kw'){
+    const all=gs.flat(),N=all.length,{r,ties}=ranks(all),n=gs.map(a=>a.length),rm=[];let i0=0;
+    gs.forEach(a=>{let s=0;for(let j=0;j<a.length;j++)s+=r[i0+j];i0+=a.length;rm.push(s/a.length)});
+    const sg=N*(N+1)/12-ties/(12*(N-1));
+    for(let i=0;i<k;i++)for(let j=i+1;j<k;j++){const z=(rm[i]-rm[j])/Math.sqrt(sg*(1/n[i]+1/n[j])),p=2*(1-jStat.normal.cdf(Math.abs(z),0,1));rows.push({a:names[i],b:names[j],st:z,p,pa:Math.min(1,p*m)})}
+    meth='Dunn testi (Bonferroni düzeltmeli)';
+  }else if(mode==='welch'){
+    for(let i=0;i<k;i++)for(let j=i+1;j<k;j++){const w=welch(gs[i],gs[j]);rows.push({a:names[i],b:names[j],st:mean(gs[i])-mean(gs[j]),p:w.p,pa:Math.min(1,w.p*m)})}
+    meth='Welch t testleri (Bonferroni düzeltmeli)';
+  }else{
+    let tk=true;
+    for(let i=0;i<k;i++)for(let j=i+1;j<k;j++){
+      const ni=gs[i].length,nj=gs[j].length,d=mean(gs[i])-mean(gs[j]),q=Math.abs(d)/Math.sqrt(AN.mse/2*(1/ni+1/nj));let p=NaN;
+      try{p=1-jStat.tukey.cdf(q,k,AN.df2)}catch(e){}
+      if(!(p>=0&&p<=1)){tk=false;const t=Math.abs(d)/Math.sqrt(AN.mse*(1/ni+1/nj));p=2*(1-jStat.studentt.cdf(t,AN.df2));rows.push({a:names[i],b:names[j],st:d,p,pa:Math.min(1,p*m)})}
+      else rows.push({a:names[i],b:names[j],st:d,p,pa:p});
+    }
+    meth=tk?'Tukey HSD':'Bonferroni düzeltmeli ikili t testleri';
+  }
+  return{rows,meth};
+}
+function normCard(D,ord,trNote,num){
+  const oe=D.filter(d=>d.o.ext.length);
+  const rows=D.map(d=>`<tr><td>${esc(d.name)}</td><td>${d.n}</td><td>${f(d.m,2)}</td><td>${f(d.s,2)}</td><td>${f(d.md,2)}</td><td>${d.sh?`W=${f(d.sh.W)}, p=${fp(d.sh.p)}`:'–'}</td><td>${d.ks?`D=${f(d.ks.D)}, p=${fp(d.ks.p)}`:'n&lt;5'}</td><td>${d.o.ext.length?`<span class='b'>uç: ${d.o.ext.map(x=>f(x,1)).join(', ')}</span>`:d.o.mild.length?`<span class='w'>${d.o.mild.map(x=>f(x,1)).join(', ')}</span>`:'yok'}</td><td>${d.normal?`<span class='o'>Normal</span>`:`<span class='b'>Normal değil</span>`} <span class='note'>(${d.useKS?'KS':'SW'})</span></td></tr>`).join('');
+  return `<div class='card'><h2>${num}) Normallik</h2><p>Klasik testler verinin yaklaşık çan eğrisi biçiminde dağıldığını varsayar. Bu yüzden her grubu ayrı ayrı sınıyoruz. H₀: veri normal dağılımdan gelir; p &gt; α ise ciddi bir sapma görmedik demektir.</p><div class='sc'><table><tr><th>Grup</th><th>n</th><th>Ort.</th><th>SS</th><th>Medyan</th><th>Shapiro-Wilk</th><th>Kolmogorov-Smirnov (Lilliefors)</th><th>Aykırı</th><th>Karar</th></tr>${rows}</table></div>${trNote}${ord?`<div class='box'><b>Sıralı değişken:</b> Normallik karar vermede kullanılmaz; sonuçlar yalnızca bilgi içindir.</div>`:''}<div class='box'><b>Kural:</b> n &lt; 30 ise karar Shapiro-Wilk ile, n ≥ 30 ise Kolmogorov-Smirnov (Lilliefors) ile verilir.</div>${oe.length?`<p class='b'>⚠️ ${oe.map(d=>esc(d.name)).join(', ')} grubunda uç değer var; veri giriş hatası olabilir. Kaynağa bakıp doğrula.</p>`:''}</div>`;
+}
+function runMulti(D,dv,gv,tr,trNote,raw0,lv,GL){
+  const A=ALPHA,k=D.length,gs=D.map(d=>d.a),names=D.map(d=>d.name),ord=dv.type==='ord',par=!ord&&D.every(d=>d.normal);
+  const lev=par?levene(gs):null,eq=lev?lev.p>A:null,AN=anova(gs),WA=wanova(gs),KW=kw(gs),mode=par?(eq?'anova':'welch'):'kw';
+  const T={anova:{name:'Tek yönlü ANOVA',st:`F(${AN.df1}, ${AN.df2}) = ${rd(AN.F)}`,p:AN.p,e:AN.eta,en:'η²'},welch:{name:'Welch ANOVA',st:`F(${AN.df1}, ${rd(WA.df2,1)}) = ${rd(WA.F)}`,p:WA.p,e:AN.eta,en:'η²'},kw:{name:'Kruskal-Wallis H testi',st:`H(${KW.df}) = ${rd(KW.H)}`,p:KW.p,e:KW.eps,en:'ε²'}};
+  const main=T[mode],alts=Object.keys(T).filter(x=>x!==mode).map(x=>T[x]),sg=main.p<A,el=eff(main.e,[.01,.06,.14]);
+  const post=sg?postHoc(mode,gs,names,AN):null;
+  RES={type:'multi',dv:dv.name,gv:gv.name,D,ord,par,eq,lev,tr:tr||'',alpha:A,mode,main,alts,post,sg,el,raw:lv.map(l=>({name:GL[l],a:raw0[l]})),warn:[warnCol(dv),warnCol(gv)]};
+  CH={type:'multi',D:D.map(d=>({name:d.name,a:d.a})),tr:tr||''};
+  const why=ord?'Sonuç değişkeni sıralı olduğu için ortalama ve ANOVA anlamsızdır; sıralara dayanan test seçildi.':par?(eq?'Tüm gruplar normal ve varyanslar benzer (Levene p = '+pf(lev.p)+'): klasik ANOVA uygun.':'Gruplar normal ama varyanslar eşit değil (Levene p = '+pf(lev.p)+'): Welch ANOVA bu durumda daha güvenli.'):'En az bir grupta normallik reddedildi: sıra tabanlı Kruskal-Wallis seçildi.';
+  let h=normCard(D,ord,trNote,3);
+  h+=`<div class='card'><h2>4) Seçilen test</h2><div class='box'><b>${main.name}</b></div><h3>Neden bu test?</h3><ul><li>${k} bağımsız grubu karşılaştırıyoruz (${names.map(esc).join(', ')}). İkili testleri tekrar tekrar yapmak yanlış alarm ihtimalini artırdığı için tüm grupları tek seferde değerlendiren bir test gerekir.</li><li>${why}</li></ul><h3>Ne işe yarar?</h3><p>${mode==='kw'?'H₀: Tüm grupların dağılımları aynıdır.':'H₀: Tüm grup ortalamaları eşittir.'} p &lt; α ise gruplardan en az biri diğerlerinden farklıdır; hangisinin farklı olduğunu ikili karşılaştırmalar gösterir.</p><h3>Sonuç</h3><p>${main.st}, p ${ptx(main.p)}, ${main.en} = ${rd(main.e,3)} (${el}).</p><p>${sg?`<span class='o'>Gruplar arasında anlamlı fark var (α = ${fa(A)}).</span>`:`<span class='w'>Anlamlı fark bulunamadı. Bu, grupların eşit olduğunu kanıtlamaz.</span>`}</p>`;
+  if(post)h+=`<h3>İkili karşılaştırmalar (${post.meth})</h3><div class='sc'><table><tr><th>Karşılaştırma</th><th>${mode==='kw'?'z':'Ort. farkı'}</th><th>p</th><th>Düzeltilmiş p</th><th>Karar</th></tr>${post.rows.map(r=>`<tr><td>${esc(r.a)} – ${esc(r.b)}</td><td>${rd(r.st)}</td><td>${fp(r.p)}</td><td>${fp(r.pa)}</td><td>${r.pa<A?`<span class='o'>Anlamlı</span>`:'Anlamlı değil'}</td></tr>`).join('')}</table></div>`;
+  h+=`</div><div class='card'><h2>5) Alternatifler</h2><ul>${alts.map(a=>`<li><b>${a.name}</b>: ${a.st}, p ${ptx(a.p)}.</li>`).join('')}</ul><p class='note'>Bu araç henüz geliştirme aşamasında. Sonuçları yayımlamadan önce R ya da SPSS ile doğrula.</p></div>`;
+  h+=`<div class='card'><button onclick='openCharts()'>📈 Grafikler (normallik ve analiz)</button> <button onclick='openReport()'>📄 Tüm analizi detaylı gör</button></div>`;
+  $('out').innerHTML=h;$('out').scrollIntoView({behavior:'smooth'});
+}
+/* Ki-kare, ordinal ilişki, sıklık ve anket güvenirliği */
+const lf=(()=>{const a=[0];for(let i=1;i<=2000;i++)a[i]=a[i-1]+Math.log(i);return n=>a[n]!==undefined?a[n]:NaN})();
+const PAL=['#2f6fed','#e67e22','#27ae60','#8e44ad','#e74c3c','#16a085','#f1c40f','#7f8c8d'];
+function fisher(a,b,c,d){const r1=a+b,r2=c+d,c1=a+c,n=r1+r2;if(n>2000)return NaN;const lp=x=>lf(r1)+lf(r2)+lf(c1)+lf(n-c1)-lf(n)-lf(x)-lf(r1-x)-lf(c1-x)-lf(r2-c1+x),lo=Math.max(0,c1-r2),hi=Math.min(r1,c1),p0=lp(a);let p=0;for(let x=lo;x<=hi;x++){const v=lp(x);if(v<=p0+1e-7)p+=Math.exp(v)}return Math.min(1,p)}
+function chiCalc(O){
+  const r=O.length,c=O[0].length,rt=O.map(a=>a.reduce((x,y)=>x+y,0)),ct=O[0].map((_,j)=>O.reduce((s,row)=>s+row[j],0)),n=rt.reduce((x,y)=>x+y,0);
+  const E=O.map((row,i)=>row.map((_,j)=>rt[i]*ct[j]/n));let x2=0,g2=0;
+  O.forEach((row,i)=>row.forEach((o,j)=>{x2+=(o-E[i][j])**2/E[i][j];if(o>0)g2+=2*o*Math.log(o/E[i][j])}));
+  const df=(r-1)*(c-1),fl=E.flat();
+  return{r,c,rt,ct,n,E,x2,g2,df,p:1-jStat.chisquare.cdf(x2,df),pg:1-jStat.chisquare.cdf(g2,df),minE:Math.min(...fl),low:fl.filter(v=>v<5).length/fl.length,V:Math.sqrt(x2/(n*Math.min(r-1,c-1))),res:O.map((row,i)=>row.map((o,j)=>(o-E[i][j])/Math.sqrt(E[i][j]*(1-rt[i]/n)*(1-ct[j]/n))))};
+}
+function pears(A,B){const n=A.length,ma=mean(A),mb=mean(B);let sab=0,saa=0,sbb=0;for(let i=0;i<n;i++){sab+=(A[i]-ma)*(B[i]-mb);saa+=(A[i]-ma)**2;sbb+=(B[i]-mb)**2}const r=sab/Math.sqrt(saa*sbb),t=r*Math.sqrt((n-2)/(1-r*r));return{r,n,p:Math.abs(r)>=1?0:2*(1-jStat.studentt.cdf(Math.abs(t),n-2))}}
+function spear(A,B){return pears(ranks(A).r,ranks(B).r)}
+function runChi(){
+  const dv=S[+$('dv').value],gv=S[+$('gv').value],A=ALPHA,msg=t=>{$('out').innerHTML=`<div class='card'><p class='b'>${t}</p></div>`};
+  if(dv.type==='num'){unsup('corr');return}
+  const rw={};dv.vals.forEach(x=>{const m=dv.map&&dv.map[x.v];if(m&&!isNaN(m.code))rw[x.row]=m});
+  const pr=[];gv.vals.forEach(x=>{const m=gv.map&&gv.map[x.v],r=rw[x.row];if(m&&!isNaN(m.code)&&r)pr.push({a:r.code,al:r.label,b:m.code,bl:m.label})});
+  const rc=[...new Set(pr.map(q=>q.a))].sort((x,y)=>x-y),cc=[...new Set(pr.map(q=>q.b))].sort((x,y)=>x-y),rL={},cL={};
+  pr.forEach(q=>{if(rL[q.a]==null)rL[q.a]=q.al||String(q.a);if(cL[q.b]==null)cL[q.b]=q.bl||String(q.b)});
+  if(rc.length>12||cc.length>12){unsup('many');return}
+  if(rc.length<2||cc.length<2||pr.length<5){msg(`Bu analiz için her iki değişkende de en az 2 farklı kategori ve toplamda en az 5 tamamlanmış gözlem gerekir. (Şu an: ${rc.length} ve ${cc.length} kategori, ${pr.length} gözlem.)`);return}
+  const O=rc.map(a=>cc.map(b=>pr.filter(q=>q.a===a&&q.b===b).length)),rows=rc.map(a=>rL[a]),cols=cc.map(b=>cL[b]),C=chiCalc(O),n=C.n,is22=C.r===2&&C.c===2,both=dv.type==='ord'&&gv.type==='ord',zc=jStat.normal.inv(1-A/2,0,1);
+  const A_=pr.map(q=>q.a),B_=pr.map(q=>q.b),dfs=Math.min(C.r-1,C.c-1),vl=eff(C.V,[.1,.3,.5].map(x=>x/Math.sqrt(dfs))),vn=is22?'φ':'Cramér V';
+  const T={};
+  T.pearson={name:'Pearson ki-kare (bağımsızlık)',st:`χ²(${C.df}, N = ${n}) = ${rd(C.x2)}`,df:C.df,p:C.p,e:C.V,en:vn,el:vl};
+  T.g={name:'Olabilirlik oranı ki-karesi (G²)',st:`G²(${C.df}) = ${rd(C.g2)}`,df:C.df,p:C.pg,e:C.V,en:vn,el:vl};
+  if(is22){
+    const[a,b,c,d]=[O[0][0],O[0][1],O[1][0],O[1][1]],yx=n*Math.max(0,Math.abs(a*d-b*c)-n/2)**2/(C.rt[0]*C.rt[1]*C.ct[0]*C.ct[1]),z0=[a,b,c,d].some(v=>v===0)?.5:0,or=((a+z0)*(d+z0))/((b+z0)*(c+z0)),se=Math.sqrt(1/(a+z0)+1/(b+z0)+1/(c+z0)+1/(d+z0));
+    T.fisher={name:'Fisher kesin testi',st:`Olasılık oranı (OR) = ${rd(or)} [%95 GA ${rd(Math.exp(Math.log(or)-1.96*se))}; ${rd(Math.exp(Math.log(or)+1.96*se))}]`,df:'–',p:fisher(a,b,c,d),e:C.V,en:'φ',el:vl};
+    T.yates={name:'Yates süreklilik düzeltmeli ki-kare',st:`χ²(1) = ${rd(yx)}`,df:1,p:1-jStat.chisquare.cdf(yx,1),e:C.V,en:'φ',el:vl};
+  }
+  if(both){
+    const sp=spear(A_,B_),pe=pears(A_,B_),M2=(n-1)*pe.r**2;
+    T.spear={name:'Spearman sıra korelasyonu',st:`ρ(${n-2}) = ${rd(sp.r)}`,df:n-2,p:sp.p,e:Math.abs(sp.r),en:'|ρ|',el:eff(sp.r,[.1,.3,.5]),r:sp.r};
+    T.trend={name:'Doğrusal-doğrusal (trend) ki-kare',st:`M²(1) = ${rd(M2)}`,df:1,p:1-jStat.chisquare.cdf(M2,1),e:Math.abs(pe.r),en:'|r|',el:eff(pe.r,[.1,.3,.5])};
+  }
+  const key=both?'spear':is22?(C.minE>=5?'pearson':'fisher'):'pearson',main=T[key],alts=Object.keys(T).filter(k=>k!==key).map(k=>T[k]),sg=main.p<A,lowW=C.low>.2||C.minE<1;
+  const obs=O.map((row,i)=>[esc(rows[i]),...row,C.rt[i]]).concat([['Toplam',...C.ct,n]]),oh=['',...cols.map(esc),'Toplam'];
+  const pc=O.map((row,i)=>[esc(rows[i]),...row.map((v,j)=>rd(v/C.ct[j]*100,1)+'%')]);
+  const res=C.res.map((row,i)=>[esc(rows[i]),...row.map(v=>Math.abs(v)>zc?'<b>'+rd(v)+'</b>':rd(v))]);
+  const ex=C.E.map((row,i)=>[esc(rows[i]),...row.map(v=>rd(v,2))]);
+  CH={type:'chi',O,rows,cols,res:C.res,E:C.E,minE:C.minE,zc};
+  RES={type:'chi',dv:dv.name,gv:gv.name,O,rows,cols,C,both,is22,key,main,alts,sg,lowW,zc,alpha:A,warn:[warnCol(dv),warnCol(gv)]};
+  const why=both?'İki değişken de sıralı olduğu için kategorileri ayrı ayrı karşılaştıran ki-kare yerine, sıralamayı hesaba katan Spearman sıra korelasyonu seçildi.':is22?(key==='fisher'?'2×2 tabloda beklenen sayılar küçük (en küçüğü '+rd(C.minE,2)+') olduğu için Fisher kesin testi seçildi.':'2×2 tabloda tüm beklenen sayılar 5 ya da daha büyük olduğu için Pearson ki-kare uygun.'):'İki nominal (kategorik) değişkenin bağımsızlığı Pearson ki-kare ile sınanır.';
+  let h=`<div class='card'><h2>3) Çapraz tablo</h2><p>Satırlarda “${esc(dv.name)}”, sütunlarda “${esc(gv.name)}” kategorileri var. Aşağıdaki sayılar gözlenen kişi/gözlem sayısıdır.</p>`+tbl('Gözlenen sayılar',oh,obs)+tbl('Sütun yüzdeleri (her grubun kendi içinde)',['',...cols.map(esc)],pc)+tbl('Beklenen sayılar (iki değişken bağımsız olsaydı)',['',...cols.map(esc)],ex)+`<div class='box'><b>Varsayım kontrolü:</b> En küçük beklenen sayı ${rd(C.minE,2)}; hücrelerin %${rd(C.low*100,0)}’inde beklenen sayı 5’in altında. ${lowW?'<span class=\'w\'>Ki-kare için bu fazla düşük (kural: hücrelerin en çok %20’si 5’in altında ve hiçbiri 1’in altında olmamalı). Kategorileri birleştirmeyi ya da daha fazla veri toplamayı düşün; sonucu temkinli yorumla.</span>':'<span class=\'o\'>Ki-kare için uygun görünüyor.</span>'}</div></div>`;
+  h+=`<div class='card'><h2>4) Seçilen test</h2><div class='box'><b>${main.name}</b></div><h3>Neden bu test?</h3><ul><li>İki kategorik değişken arasında ilişki olup olmadığını soruyoruz.</li><li>${why}</li></ul><h3>Ne işe yarar?</h3><p>${both?'H₀: İki değişken arasında sıralı bir ilişki yoktur (ρ = 0).':'H₀: İki değişken birbirinden bağımsızdır.'} p &lt; α ise H₀ reddedilir.</p><h3>Sonuç</h3><p>${main.st}, p ${ptx(main.p)}, ${main.en} = ${rd(main.e,3)} (${main.el}).</p><p>${sg?`<span class='o'>${both?'İki değişken arasında anlamlı bir ilişki var':'Değişkenler arasında anlamlı bir ilişki var'} (α = ${fa(A)}).</span>`:`<span class='w'>Anlamlı bir ilişki bulunamadı. Bu, ilişkinin olmadığını kanıtlamaz.</span>`}</p>${both&&sg?`<p>Yön: ρ ${T.spear.r>0?'pozitif; biri arttıkça diğeri de artma eğiliminde.':'negatif; biri arttıkça diğeri azalma eğiliminde.'}</p>`:''}`;
+  if(!both)h+=`<h3>Hangi hücreler beklenenden sapıyor?</h3><p class='note'>Düzeltilmiş standartlaştırılmış artıklar: |z| &gt; ${rd(zc)} olan hücreler (kalın) beklenenden belirgin biçimde fazla (+) ya da az (−) gözleme sahip.</p>`+tbl('Düzeltilmiş standartlaştırılmış artıklar',['',...cols.map(esc)],res);
+  h+=`</div><div class='card'><h2>5) Alternatifler</h2><ul>${alts.map(a=>`<li><b>${a.name}</b>: ${a.st}, p ${ptx(a.p)}.</li>`).join('')}</ul><p class='note'>Bu araç henüz geliştirme aşamasında. Sonuçları yayımlamadan önce R ya da SPSS ile doğrula.</p></div><div class='card'><button onclick='openCharts()'>📈 Grafikler</button> <button onclick='openReport()'>📄 Tüm analizi detaylı gör</button></div>`;
+  $('out').innerHTML=h;$('out').scrollIntoView({behavior:'smooth'});
+}
+function runFreq(dv){
+  const cnt={},lab={};dv.vals.forEach(x=>{const m=dv.map&&dv.map[x.v];if(!m||isNaN(m.code))return;cnt[m.code]=(cnt[m.code]||0)+1;if(lab[m.code]==null)lab[m.code]=m.label||String(m.code)});
+  const ks=Object.keys(cnt).map(Number).sort((a,b)=>a-b),n=ks.reduce((s,k)=>s+cnt[k],0);
+  if(ks.length<2||n<5){$('out').innerHTML=`<div class='card'><p class='b'>Sıklık analizi için en az 2 kategori ve 5 gözlem gerekir.</p></div>`;return}
+  const e=n/ks.length,x2=ks.reduce((s,k)=>s+(cnt[k]-e)**2/e,0),df=ks.length-1,p=1-jStat.chisquare.cdf(x2,df),top=ks.reduce((a,k)=>cnt[k]>cnt[a]?k:a,ks[0]);
+  RES=null;CH=null;
+  $('out').innerHTML=`<div class='card'><h2>3) Sıklık tablosu: ${esc(dv.name)}</h2>`+tbl('Kategori dağılımı',['Kategori','n','%','Eşit dağılımda beklenen'],ks.map(k=>[esc(lab[k]),cnt[k],rd(cnt[k]/n*100,1)+'%',rd(e,1)]))+`<p>En sık görülen kategori: <b>${esc(lab[top])}</b> (%${rd(cnt[top]/n*100,1)}).</p><h3>Kategoriler eşit dağılıyor mu? (uyum iyiliği ki-karesi)</h3><p>H₀: Her kategorinin payı eşittir. χ²(${df}, N = ${n}) = ${rd(x2)}, p ${ptx(p)}. ${p<ALPHA?`<span class='o'>Dağılım eşit değil (α = ${fa(ALPHA)}).</span>`:`<span class='w'>Eşit dağılımdan anlamlı bir sapma bulunamadı.</span>`}</p><p class='note'>Kategoriler arasında farklı beklenen oranlar (ör. nüfus oranları) denemek için sonraki aşamada seçenek eklenebilir. Bu değişkeni başka bir değişkenle ilişkilendirmek için yukarıdan bir grup değişkeni seç.</p></div>`;
+  $('out').scrollIntoView({behavior:'smooth'});
+}
+function leg(rows,W,H,P){return rows.map((rn,i)=>{const lx=P.l+i*Math.min(110,(W-P.l-P.r)/rows.length);return `<rect x='${lx}' y='${H-18}' width='10' height='10' fill='${PAL[i%8]}'/><text x='${lx+14}' y='${H-9}' font-size='11' fill='var(--text)'>${esc(rn)}</text>`}).join('')}
+function chStack(O,rows,cols,pct){
+  const W=520,H=320,P={l:46,r:14,t:14,b:58},nc=cols.length,tot=cols.map((_,j)=>O.reduce((s,r)=>s+r[j],0)),mx=pct?100:Math.max(...tot),A=ax(W,H,P,0,nc,0,mx*1.05,'',pct?'Yüzde (%)':'Gözlem sayısı',true);
+  let s=A.s;
+  cols.forEach((cn,j)=>{const cx=A.sx(j+.5),bw=Math.min(80,(W-P.l-P.r)/nc*.6);let acc=0;
+    rows.forEach((rn,i)=>{const v=pct?O[i][j]/tot[j]*100:O[i][j],y0=A.sy(acc),y1=A.sy(acc+v);acc+=v;s+=`<rect x='${cx-bw/2}' y='${y1}' width='${bw}' height='${Math.max(0,y0-y1)}' fill='${PAL[i%8]}' stroke='#fff' stroke-width='.5'/>`;if(y0-y1>14)s+=`<text x='${cx}' y='${(y0+y1)/2+4}' text-anchor='middle' font-size='11' fill='#fff'>${pct?fm(v)+'%':v}</text>`});
+    s+=`<text x='${cx}' y='${H-P.b+16}' text-anchor='middle' font-size='12' fill='var(--text)'>${esc(cn)}</text>`});
+  return svg(W,H,s+leg(rows,W,H,P));
+}
+function chGroup(O,rows,cols){
+  const W=520,H=320,P={l:46,r:14,t:14,b:58},nc=cols.length,nr=rows.length,A=ax(W,H,P,0,nc,0,Math.max(...O.flat())*1.15,'','Gözlem sayısı',true);let s=A.s;
+  cols.forEach((cn,j)=>{const x0=A.sx(j+.1),cw=(A.sx(j+.9)-x0)/nr;rows.forEach((rn,i)=>{const v=O[i][j];s+=`<rect x='${x0+i*cw+1}' y='${A.sy(v)}' width='${Math.max(2,cw-2)}' height='${A.sy(0)-A.sy(v)}' fill='${PAL[i%8]}'/><text x='${x0+i*cw+cw/2}' y='${A.sy(v)-3}' text-anchor='middle' font-size='10' fill='var(--text)'>${v}</text>`});s+=`<text x='${A.sx(j+.5)}' y='${H-P.b+16}' text-anchor='middle' font-size='12' fill='var(--text)'>${esc(cn)}</text>`});
+  return svg(W,H,s+leg(rows,W,H,P));
+}
+function hNote(a){const n=a.length,sk=skew(a),o=outl(a);let t=`n = ${n}; çarpıklık = ${rd(sk)}`+(Math.abs(sk)<.5?' (belirgin çarpıklık yok).':sk>0?' (sağa çarpık: uzun bir sağ kuyruk var).':' (sola çarpık: uzun bir sol kuyruk var).');t+=` Ortalama ${rd(mean(a))}, medyan ${rd(qt(srt(a),.5))}.`;if(o.ext.length)t+=` ⚠️ Uç değer: ${o.ext.map(v=>rd(v)).join(', ')} (veri giriş hatası olabilir).`;else if(o.mild.length)t+=` Aykırı olabilecek değer: ${o.mild.map(v=>rd(v)).join(', ')}.`;return t}
+function qNote(a){const x=srt(a),n=x.length,z=x.map((_,i)=>jStat.normal.inv((i+1-.375)/(n+.25),0,1)),mx=mean(x),mz=mean(z);let a1=0,a2=0,a3=0;x.forEach((v,i)=>{a1+=(v-mx)*(z[i]-mz);a2+=(v-mx)**2;a3+=(z[i]-mz)**2});const r=a1/Math.sqrt(a2*a3);return `Noktalarla çizgi arasındaki korelasyon r = ${f(r,3)}: ${r>=.98?'noktalar çizgiye çok yakın, normal dağılımla uyumlu görünüyor.':r>=.95?'hafif bir sapma var.':'çizgiden belirgin bir ayrılma var, normallikten sapma olabilir.'} (Küçük örneklemde bu ölçüt katıdır; Shapiro-Wilk sonucuyla birlikte yorumla.)`}
+function bNote(G){return G.map(g=>{const o=outl(g.a);return o.ext.length?`${esc(g.name)}: uç değer ${o.ext.map(v=>rd(v)).join(', ')} ⚠️`:o.mild.length?`${esc(g.name)}: aykırı olabilecek değer ${o.mild.map(v=>rd(v)).join(', ')}`:`${esc(g.name)}: aykırı değer yok`}).join(' · ')}
+function rNote(G,mu){const st=G.map(g=>{const n=g.a.length,m=mean(g.a),se=sd(g.a)/Math.sqrt(n),t=jStat.studentt.inv(.975,n-1);return{m,lo:m-t*se,hi:m+t*se,name:g.name}});if(mu!=null){const s=st[0];return s.lo<=mu&&mu<=s.hi?`Güven aralığı μ₀ = ${fm(mu)} değerini içeriyor: ortalama bu değerden farklı görünmüyor.`:`Güven aralığı μ₀ = ${fm(mu)} değerini içermiyor: ortalama bu değerden farklı görünüyor.`}const bad=[];for(let i=0;i<st.length;i++)for(let j=i+1;j<st.length;j++)if(st[i].lo>st[j].hi||st[j].lo>st[i].hi)bad.push(esc(st[i].name)+' – '+esc(st[j].name));return bad.length?`Güven aralıkları çakışmıyor: ${bad.join(', ')}. Bu çiftlerde fark büyük olabilir.`:`Güven aralıkları çakışıyor; yine de kesin karar için test sonucuna bak.`}
+function cNote(C){let b=null;C.res.forEach((row,i)=>row.forEach((v,j)=>{if(!b||Math.abs(v)>Math.abs(b.v))b={v,i,j}}));const o=C.O[b.i][b.j],e=C.E[b.i][b.j];return `En belirgin sapma: ${esc(C.rows[b.i])} × ${esc(C.cols[b.j])} hücresi (z = ${rd(b.v)}); gözlenen ${o}, beklenen ${rd(e,1)}. ${Math.abs(b.v)>C.zc?'Bu hücre beklenenden belirgin biçimde '+(o>e?'fazla':'az')+' gözleme sahip.':'Hiçbir hücre belirgin biçimde sapmıyor.'}${C.minE<5?' ⚠️ Bazı hücrelerde beklenen sayı 5’in altında; ki-kare temkinli yorumlanmalı.':''}`}
+function openLikert(){
+  const cand=S.map((c,i)=>({c,i})).filter(x=>x.c.type==='num'||x.c.type==='ord');
+  $('dlgc').innerHTML=`<h2>Anket ölçeği güvenirliği (Cronbach α)</h2><p class='note'>Aynı kavramı ölçen maddeleri (ör. 5’li Likert soruları) seç. Maddeler 1, 2, 3… gibi sayılarla kodlanmış olmalı (metinse Değer etiketleri panelinde kod ver). Seçili tüm maddeleri eksiksiz yanıtlayanlar analize alınır.</p><div id='lkmsg' class='b'></div><div>${cand.map(x=>`<label style='display:block'><input type='checkbox' class='lk' style='width:auto' value='${x.i}'> ${esc(x.c.name)}</label>`).join('')||'Uygun (ölçek ya da sıralı) değişken yok. Önce veriyi girip “Veriyi kontrol et”e bas.'}</div><p><button onclick='runLikert()'>Hesapla</button><button class='alt' onclick='closeDlg()'>Vazgeç</button></p>`;
+  $('dlg').hidden=false;
+}
+function runLikert(){
+  const ix=[...document.querySelectorAll('.lk:checked')].map(x=>+x.value),em=t=>{$('lkmsg').textContent=t};
+  if(ix.length<2){em('En az 2 madde seç.');return}
+  const cols=ix.map(i=>S[i]),val=(c,x)=>c.type==='num'?toN(x.v):(c.map&&c.map[x.v]?c.map[x.v].code:NaN);
+  const by=cols.map(c=>{const m={};c.vals.forEach(x=>{const v=val(c,x);if(!isNaN(v))m[x.row]=v});return m});
+  const rows=Object.keys(by[0]).filter(r=>by.every(m=>m[r]!=null)),X=cols.map((_,j)=>rows.map(r=>by[j][r])),n=rows.length,k=cols.length;
+  if(n<5){em('Seçili maddelerin hepsini yanıtlayan en az 5 kişi gerekir (şu an '+n+').');return}
+  const tot=rows.map((_,t)=>X.reduce((s,a)=>s+a[t],0)),vt=sd(tot)**2,vi=X.map(a=>sd(a)**2);
+  if(!(vt>0)){em('Toplam puanda değişkenlik yok; analiz yapılamaz.');return}
+  const alpha=k/(k-1)*(1-vi.reduce((a,b)=>a+b,0)/vt);
+  const item=cols.map((c,j)=>{const rest=rows.map((_,t)=>tot[t]-X[j][t]),r=pears(X[j],rest).r,vi2=vi.filter((_,q)=>q!==j),a2=k>2?(k-1)/(k-2)*(1-vi2.reduce((a,b)=>a+b,0)/(sd(rest)**2)):NaN;return{name:c.name,m:mean(X[j]),s:sd(X[j]),md:qt(srt(X[j]),.5),r,a2}});
+  const lab=alpha>=.9?'çok yüksek (maddeler birbirini fazla tekrar ediyor olabilir)':alpha>=.8?'iyi':alpha>=.7?'kabul edilebilir':alpha>=.6?'sınırda':'zayıf';
+  const neg=item.filter(x=>x.r<0).map(x=>esc(x.name)),up=item.filter(x=>Number.isFinite(x.a2)&&x.a2>alpha+.02).map(x=>esc(x.name));
+  const all=[...new Set(X.flat())].sort((a,b)=>a-b),lik=all.length<=7&&all.every(Number.isInteger);
+  let h=`<div class='card'><h2>Anket ölçeği güvenirliği (Cronbach α)</h2><p>${k} madde, ${n} eksiksiz yanıtlayıcı. <b>Cronbach α = ${rd(alpha,3)}</b>: güvenirlik <b>${lab}</b>. Alfa, maddelerin birbiriyle ne kadar tutarlı olduğunu gösterir; 0,70 üzeri genelde yeterli sayılır, ama ölçeğin amacına ve madde sayısına göre değişir.</p>`+tbl('Madde istatistikleri',['Madde','Ort.','SS','Medyan','Düzeltilmiş madde-toplam korelasyonu','Madde silinirse α'],item.map(x=>[esc(x.name),rd(x.m),rd(x.s),rd(x.md),rd(x.r,3),rd(x.a2,3)]));
+  if(lik)h+=tbl('Madde yanıt dağılımı (n ve %)',['Madde',...all.map(String)],cols.map((c,j)=>[esc(c.name),...all.map(v=>{const q=X[j].filter(y=>y===v).length;return q+' (%'+rd(q/n*100,1)+')'})]));
+  h+=`${neg.length?`<p class='b'>⚠️ Madde-toplam korelasyonu negatif olan madde: ${neg.join(', ')}. Bu madde ters kodlanmış olabilir; ters çevirip yeniden dene.</p>`:''}${up.length?`<p class='w'>Şu madde(ler) çıkarılırsa güvenirlik artıyor: ${up.join(', ')}. Yine de bir maddeyi yalnızca istatistiğe bakarak değil, içeriğine bakarak da değerlendir.</p>`:''}<p class='note'>Cronbach α bir ölçeğin tek boyutlu olduğunu kanıtlamaz; boyut sayısı için faktör analizi gerekir. Kopyalanabilir tablolar için tablonun üstündeki düğmeyi kullan.</p></div>`;
+  RES=null;CH=null;closeDlg();$('out').innerHTML=h;$('out').scrollIntoView({behavior:'smooth'});
+}
+function goCell(r,c){const el=cellIn(r,c);if(!el)return;el.scrollIntoView({block:'center',inline:'center',behavior:'smooth'});setTimeout(()=>{el.focus();if(el.select)el.select()},350)}
+const cl=(r,ci)=>`<span class='cl' onclick='goCell(${r},${ci})'>satır ${r}, sütun ${L(ci)}</span>`;
+/* v0.5: sürüm, desteklenmeyen analiz uyarıları, geri bildirim */
+const VER='0.8',FBMAIL='huysuzkarga.iletisim@gmail.com',W3KEY='45ea9f38-7c49-4e99-9b9a-55d62ad8b7c5';
+const UNS={
+ corr:['İki ölçek düzeyi değişken arasında korelasyon / regresyon','Şimdilik: değişkenlerden birini sıralı (ordinal) yaparak Spearman korelasyonunu kullanabilir ya da değerleri anlamlı aralıklara bölüp gruplayarak grup karşılaştırması yapabilirsin. Bunlar bilgi kaybına yol açar; ideal çözüm Pearson korelasyonu ve regresyondur.'],
+ pair:['Eşleştirilmiş / tekrarlı ölçüm testleri (eşleştirilmiş t, Wilcoxon, Friedman, tekrarlı ölçümlerde ANOVA)','Aynı kişiler birden fazla kez ölçüldüyse bağımsız gruplar testlerini KULLANMA: sonuçlar yanlış olur. İki ölçüm için bir ipucu: farkları (son − ön) yeni bir sütunda hesaplayıp tek değişkenli analizde karşılaştırma değerini (μ₀) 0 yaparsan, eşleştirilmiş t testine (normal değilse Wilcoxon’a) denk bir sonuç alırsın.'],
+ many:['Çok sayıda grup ya da kategori (12’den fazla)','Bu değişken aslında sürekli (sayısal) olabilir; grup değişkeni olarak kullanmak anlamsız ya da okunamaz sonuç verir. Değer etiketleri panelinde aynı kodu vererek kategorileri birleştirmeyi deneyebilirsin.'],
+ same:['Sonuç ve grup aynı değişken','Sonuç ve grup için farklı değişkenler seçmelisin.']
+};
+function unsup(k){
+  const t=UNS[k][0],now=UNS[k][1];
+  $('out').innerHTML=`<div class='card'><h2>⚠️ Bu analiz v${VER}’te henüz yok</h2>`+(k==='same'?`<p><b>${t}.</b> ${now}</p>`:`<p><b>${t}</b> için gereken test bu sürümde bulunmuyor. Yanlış bir test çalıştırıp sana yanlış bir sonuç göstermek istemedik.</p><p>${now}</p><p><button onclick='openFeedback("${k}")'>Bu analizi talep et</button></p>`)+`</div>`;
+  $('out').scrollIntoView({behavior:'smooth'});
+}
+function pick(sel,types,not){for(const t of types){const o=[...sel.options].find(o=>o.value!==''&&o.value!==not&&S[+o.value]&&S[+o.value].type===t);if(o){sel.value=o.value;return}}}
+const WISH=[['reg','Çoklu doğrusal regresyon'],['rm','Tekrarlı ölçümlerde ANOVA / Friedman (3+ ölçüm)'],['anova2','İki yönlü (faktöriyel) ANOVA'],['ancova','ANCOVA'],['logit','Lojistik regresyon'],['fa','Faktör analizi (anket)'],['power','Güç analizi / örneklem büyüklüğü'],['excel','Excel (.xlsx) dosyası yükleme'],['other','Diğer']];
+function openFeedback(pre){
+  const on=k=>k===pre||(pre==='corr'&&k==='reg')||(pre==='pair'&&k==='rm');
+  $('dlgc').innerHTML=`<h2>💬 Geri bildirim</h2><p class='note'>İstatistik Asistanı v${VER} deneme sürümü. Eksik gördüğün analizi, bir hatayı ya da önerini yaz; “Gönder” doğrudan bize ulaştırır, hiçbir bilgin kaydedilmez. Yanıt almak istersen e-postanı yazabilirsin, istemiyorsan boş bırakabilirsin.</p><p><b>E-posta (isteğe bağlı):</b> <input id='fbe' type='email' placeholder='yanit alacaksan yaz' style='width:220px'></p><p><b>Hangi analize ihtiyacın var?</b></p><div>${WISH.map(w=>`<label style='display:block'><input type='checkbox' class='wx' style='width:auto' value='${w[1]}'${on(w[0])?' checked':''}> ${w[1]}</label>`).join('')}</div><p><b>Notun:</b><br><textarea id='fbt' rows='5' style='width:100%;font:inherit;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--text)' placeholder='Ne yapmaya çalışıyordun? Ne bekliyordun, ne oldu?'></textarea></p><p><button id='fbsend' onclick='sendFb()'>📩 Gönder</button> <button class='alt' onclick='copyFb()'>📋 Kopyala</button><button class='alt' onclick='closeDlg()'>Kapat</button></p><p id='fbst' class='note'></p>`;
+  $('dlg').hidden=false;
+}
+function fbText(){const w=[...document.querySelectorAll('.wx:checked')].map(x=>'- '+x.value).join('\n'),t=($('fbt').value||'').trim();return'İstatistik Asistanı v'+VER+' geri bildirimi\n\nİhtiyaç duyulan analizler:\n'+(w||'- (belirtilmedi)')+'\n\nNot:\n'+(t||'-')+'\n\nTarayıcı: '+navigator.userAgent}
+function sendFb(){
+  const b=document.getElementById('fbsend');if(b.disabled)return;b.disabled=true;b.textContent='Gönderiliyor…';$('fbst').textContent='';
+  const em=($('fbe')&&$('fbe').value||'').trim();
+  fetch('https://api.web3forms.com/submit',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({access_key:W3KEY,subject:'İstatistik Asistanı geri bildirim',from_name:'İstatistik Asistanı v'+VER,email:em||'anonim@istatistikasistani.app',message:fbText(),replyto:em||undefined})})
+  .then(r=>r.json()).then(j=>{
+    if(j&&j.success){$('fbst').innerHTML="<span class='o'>Gönderildi, teşekkürler! 🎉</span>";b.textContent='📩 Gönderildi';setTimeout(closeDlg,1800)}
+    else{b.disabled=false;b.textContent='📩 Gönder';$('fbst').innerHTML="<span class='w'>Gönderilemedi. 📋 Kopyala’yı kullanıp "+FBMAIL+" adresine mail atabilirsin.</span>"}
+  }).catch(()=>{
+    b.disabled=false;b.textContent='📩 Gönder';$('fbst').innerHTML="<span class='w'>Bağlantı kurulamadı. 📋 Kopyala’yı kullanıp "+FBMAIL+" adresine mail atabilirsin.</span>";
+  });
+}
+function copyFb(){
+  const txt=fbText();
+  const ta=document.createElement('textarea');ta.value=txt;ta.style.cssText='position:fixed;left:-9999px';document.body.appendChild(ta);ta.select();let ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();
+  toast(ok?'Geri bildirim kopyalandı. Şimdi geliştiriciye ilet.':'Kopyalanamadı; metni elle yazıp iletebilirsin.');
+}
+function openAbout(){
+  $('dlgc').innerHTML=`<h2>İstatistik Asistanı v${VER}</h2><p>Ham veriyi yapıştır ya da bir CSV dosyası yükle; program veriyi kontrol eder, normalliğe bakar, uygun testi seçer ve nedenini, alternatiflerini ve yorumunu açıklar. Verin tarayıcında kalır, hiçbir yere gönderilmez.</p><h3>Neler yapabilir?</h3><ul><li><b>Veri kontrolü:</b> yazım hatası, uç değer ve tür uyumsuzluğu uyarıları; değer etiketleri (kodlama); CSV/TSV dosyası yükleme</li><li><b>Tek değişken:</b> betimsel istatistikler, normallik, tek örneklem t / Wilcoxon</li><li><b>Tek nominal değişken:</b> sıklık tablosu, uyum iyiliği ki-karesi</li><li><b>2 bağımsız grup:</b> Welch t, Mann-Whitney U</li><li><b>3+ bağımsız grup:</b> ANOVA, Welch ANOVA, Kruskal-Wallis ve ikili karşılaştırmalar</li><li><b>İki ölçek değişken:</b> Pearson korelasyonu, saçılım grafiği, Spearman alternatifi</li><li><b>Eşleştirilmiş iki ölçüm (ön-son):</b> eşleştirilmiş t testi / Wilcoxon işaretli sıra testi</li><li><b>Kategorik × kategorik:</b> ki-kare, Fisher, G²</li><li><b>Sıralı × sıralı:</b> Spearman, trend ki-kare</li><li><b>Anket:</b> Cronbach α, madde istatistikleri, yanıt dağılımı</li><li>Normal olmayan veri için log / karekök dönüşümü, grafikler, kopyalanabilir tablolu ayrıntılı rapor</li></ul><h3>Henüz yok ⏳</h3><ul><li>Çoklu doğrusal regresyon</li><li>Tekrarlı ölçümlerde ANOVA / Friedman (3+ ölçüm)</li><li>İki yönlü ANOVA, ANCOVA</li><li>Lojistik regresyon, faktör analizi, güç analizi</li></ul><p>Bunlardan birini gerektiren bir analiz istediğinde program seni uyarır; yanlış bir test çalıştırmaz.</p><p class='note'>Bu bir deneme sürümüdür. Sonuçları yayımlamadan önce R ya da SPSS ile doğrulamanı öneririz.</p><p><button onclick='openFeedback()'>💬 Geri bildirim ver</button><button class='alt' onclick='closeDlg()'>Kapat</button></p>`;
+  $('dlg').hidden=false;
+}
+/* Grafikler */
+let CH=null,CP=[],CI=0;
+const fm=v=>String(+(+v).toFixed(2)).replace('.',',');
+const svg=(W,H,x)=>`<svg viewBox='0 0 ${W} ${H}' style='width:100%;max-width:540px;height:auto'>${x}</svg>`;
+function NS(lo,hi,k){const span=hi-lo||1,raw=span/k,mg=10**Math.floor(Math.log10(raw)),st=[1,2,5,10].map(m=>m*mg).find(s=>s>=raw)||10*mg,t=[];for(let v=Math.ceil(lo/st-1e-9)*st;v<=hi+1e-9;v+=st)t.push(+v.toFixed(10));return t}
+function ax(W,H,P,x0,x1,y0,y1,xl,yl,noX){
+  const sx=v=>P.l+(v-x0)/(x1-x0)*(W-P.l-P.r),sy=v=>H-P.b-(v-y0)/(y1-y0)*(H-P.t-P.b);
+  let s=`<line x1='${P.l}' y1='${H-P.b}' x2='${W-P.r}' y2='${H-P.b}' stroke='var(--muted)'/><line x1='${P.l}' y1='${P.t}' x2='${P.l}' y2='${H-P.b}' stroke='var(--muted)'/>`;
+  NS(y0,y1,5).forEach(v=>{s+=`<line x1='${P.l}' x2='${W-P.r}' y1='${sy(v)}' y2='${sy(v)}' stroke='var(--line)' stroke-dasharray='2 3'/><text x='${P.l-6}' y='${sy(v)+4}' text-anchor='end' font-size='11' fill='var(--muted)'>${fm(v)}</text>`});
+  if(!noX)NS(x0,x1,6).forEach(v=>{s+=`<line x1='${sx(v)}' x2='${sx(v)}' y1='${H-P.b}' y2='${H-P.b+4}' stroke='var(--muted)'/><text x='${sx(v)}' y='${H-P.b+16}' text-anchor='middle' font-size='11' fill='var(--muted)'>${fm(v)}</text>`});
+  s+=`<text x='${(P.l+W-P.r)/2}' y='${H-5}' text-anchor='middle' font-size='12' fill='var(--text)'>${xl}</text><text transform='translate(13 ${(P.t+H-P.b)/2}) rotate(-90)' text-anchor='middle' font-size='12' fill='var(--text)'>${yl}</text>`;
+  return{sx,sy,s};
+}
+function chHist(a){
+  const W=520,H=320,P={l:46,r:14,t:14,b:42},n=a.length,m=mean(a),s=sd(a)||1,k=Math.max(5,Math.ceil(Math.log2(n)+1)),mn=Math.min(...a),mx=Math.max(...a),bw=(mx-mn)/k||1;
+  const c=Array(k).fill(0);a.forEach(v=>c[Math.min(k-1,Math.floor((v-mn)/bw))]++);
+  const pdf=x=>n*bw*Math.exp(-.5*((x-m)/s)**2)/(s*Math.sqrt(2*Math.PI)),x0=Math.min(mn,m-3*s)-bw*.2,x1=Math.max(mx,m+3*s)+bw*.2,A=ax(W,H,P,x0,x1,0,Math.max(...c,pdf(m))*1.12,'Değer','Sıklık');
+  let b='';c.forEach((v,i)=>{const xa=A.sx(mn+i*bw),xb=A.sx(mn+(i+1)*bw);b+=`<rect x='${xa+1}' y='${A.sy(v)}' width='${Math.max(1,xb-xa-2)}' height='${A.sy(0)-A.sy(v)}' style='fill:var(--accent);opacity:.55'/>`});
+  let d='';for(let i=0;i<=80;i++){const x=x0+(x1-x0)*i/80;d+=(i?'L':'M')+A.sx(x)+' '+A.sy(pdf(x))}
+  return svg(W,H,A.s+b+`<path d='${d}' fill='none' stroke='var(--bad)' stroke-width='2'/>`);
+}
+function chQQ(a){
+  const W=520,H=320,P={l:46,r:14,t:14,b:42},x=srt(a),n=x.length,z=x.map((_,i)=>jStat.normal.inv((i+1-.375)/(n+.25),0,1)),z1=jStat.normal.inv(.25,0,1),z3=-z1,y1=qt(x,.25),y3=qt(x,.75),sl=(y3-y1)/(z3-z1),pad=(x[n-1]-x[0])*.06||1;
+  const zl=Math.min(...z)-.25,zh=Math.max(...z)+.25,A=ax(W,H,P,zl,zh,x[0]-pad,x[n-1]+pad,'Teorik normal kantiller','Gözlenen değer');
+  let s=A.s+`<line x1='${A.sx(zl)}' y1='${A.sy(y1+sl*(zl-z1))}' x2='${A.sx(zh)}' y2='${A.sy(y1+sl*(zh-z1))}' stroke='var(--bad)' stroke-width='2'/>`;
+  z.forEach((q,i)=>{s+=`<circle cx='${A.sx(q)}' cy='${A.sy(x[i])}' r='3.5' style='fill:var(--accent);opacity:.8'/>`});
+  return svg(W,H,s);
+}
+function chBox(G,lab){
+  const W=520,H=320,P={l:46,r:14,t:14,b:42},all=G.flatMap(g=>g.a),lo=Math.min(...all),hi=Math.max(...all),pad=(hi-lo)*.08||1,A=ax(W,H,P,0,G.length,lo-pad,hi+pad,'','Değer',true);
+  let s=A.s;
+  G.forEach((g,i)=>{
+    const sa=srt(g.a),q1=qt(sa,.25),md=qt(sa,.5),q3=qt(sa,.75),iq=q3-q1,wl=Math.min(...sa.filter(v=>v>=q1-1.5*iq)),wh=Math.max(...sa.filter(v=>v<=q3+1.5*iq)),cx=A.sx(i+.5),bw=Math.min(70,(W-P.l-P.r)/G.length*.45),mm=mean(g.a);
+    s+=`<line x1='${cx}' x2='${cx}' y1='${A.sy(wl)}' y2='${A.sy(wh)}' stroke='var(--text)'/><line x1='${cx-8}' x2='${cx+8}' y1='${A.sy(wl)}' y2='${A.sy(wl)}' stroke='var(--text)'/><line x1='${cx-8}' x2='${cx+8}' y1='${A.sy(wh)}' y2='${A.sy(wh)}' stroke='var(--text)'/><rect x='${cx-bw/2}' y='${A.sy(q3)}' width='${bw}' height='${Math.max(1,A.sy(q1)-A.sy(q3))}' style='fill:var(--accent);opacity:.35' stroke='var(--accent)'/><line x1='${cx-bw/2}' x2='${cx+bw/2}' y1='${A.sy(md)}' y2='${A.sy(md)}' stroke='var(--text)' stroke-width='2.5'/>`;
+    g.a.filter(v=>v<wl||v>wh).forEach(v=>{s+=`<circle cx='${cx}' cy='${A.sy(v)}' r='3.5' fill='none' stroke='var(--bad)' stroke-width='1.6'/>${lab?`<text x='${cx+8}' y='${A.sy(v)+4}' font-size='10' fill='var(--bad)'>${fm(v)}</text>`:''}`});
+    s+=`<path d='M${cx} ${A.sy(mm)-5}L${cx+5} ${A.sy(mm)}L${cx} ${A.sy(mm)+5}L${cx-5} ${A.sy(mm)}Z' fill='var(--text)'/><text x='${cx}' y='${H-P.b+18}' text-anchor='middle' font-size='12' fill='var(--text)'>${esc(g.name)}</text>`;
+  });
+  return svg(W,H,s);
+}
+function chBar(G,mu){
+  const W=520,H=320,P={l:46,r:14,t:14,b:42},st=G.map(g=>{const n=g.a.length,m=mean(g.a),se=sd(g.a)/Math.sqrt(n),t=jStat.studentt.inv(.975,n-1);return{name:g.name,m,lo:m-t*se,hi:m+t*se}});
+  const vals=st.flatMap(x=>[x.lo,x.hi]).concat(mu==null?[]:[mu]),lo=Math.min(0,...vals),hi=Math.max(...vals),A=ax(W,H,P,0,G.length,lo,hi+(hi-lo)*.1||1,'','Ortalama (%95 GA)',true);
+  let s=A.s;
+  st.forEach((x,i)=>{const cx=A.sx(i+.5),bw=Math.min(90,(W-P.l-P.r)/G.length*.5);
+    s+=`<rect x='${cx-bw/2}' y='${Math.min(A.sy(x.m),A.sy(0))}' width='${bw}' height='${Math.abs(A.sy(0)-A.sy(x.m))}' style='fill:var(--accent);opacity:.5'/><line x1='${cx}' x2='${cx}' y1='${A.sy(x.lo)}' y2='${A.sy(x.hi)}' stroke='var(--text)' stroke-width='2'/><line x1='${cx-8}' x2='${cx+8}' y1='${A.sy(x.lo)}' y2='${A.sy(x.lo)}' stroke='var(--text)' stroke-width='2'/><line x1='${cx-8}' x2='${cx+8}' y1='${A.sy(x.hi)}' y2='${A.sy(x.hi)}' stroke='var(--text)' stroke-width='2'/><text x='${cx}' y='${H-P.b+18}' text-anchor='middle' font-size='12' fill='var(--text)'>${esc(x.name)}</text>`});
+  if(mu!=null)s+=`<line x1='${P.l}' x2='${W-P.r}' y1='${A.sy(mu)}' y2='${A.sy(mu)}' stroke='var(--bad)' stroke-dasharray='6 4' stroke-width='2'/><text x='${W-P.r-4}' y='${A.sy(mu)-5}' text-anchor='end' font-size='11' fill='var(--bad)'>μ₀ = ${fm(mu)}</text>`;
+  return svg(W,H,s);
+}
+function chartPages(rep){
+  const C=CH,p=[],tn=C.tr?' (dönüştürülmüş veri)':'',N=x=>rep?'':x;
+  const cH='Çubuklar gözlem sıklığını, kırmızı eğri aynı ortalama ve standart sapmaya sahip normal dağılımı gösterir. Çubuklar eğriyi kabaca izliyorsa normallik makuldur. Tek tepeli ve simetrik olup olmadığına, bir tarafta uzun kuyruk (çarpıklık) bulunup bulunmadığına bak.';
+  const cQ='Noktalar çizgiye yakın diziliyorsa veri normaldir. Uçlarda çizgiden kopma uç değer ya da ağır kuyruğa, yay şeklinde sapma çarpıklığa işaret eder. Küçük örneklemde noktalar çizgi etrafında biraz dalgalanır, bu normaldir.';
+  const cB='Kutu Q1–Q3 arasını, kutudaki kalın çizgi medyanı, baklava ortalamayı gösterir. Bıyıklar 1,5×IQR içindeki en uç değerlere uzanır; dışındaki kırmızı halkalar olası aykırı değerlerdir. Medyan ve ortalama birbirinden uzaksa çarpıklık olabilir.';
+  const cR='Çubuk ortalamayı, dikey çizgi %95 güven aralığını gösterir.';
+  if(C.type==='chi'){
+    p.push({g:'Analiz',t:'Yığılmış sütun grafiği (%)',svg:chStack(C.O,C.rows,C.cols,true),cap:'Her sütun bir grubu gösterir; renkler diğer değişkenin kategorileridir ve her sütun %100’e tamamlanır. Sütunların renk dağılımı birbirinden ne kadar farklıysa iki değişken arasındaki ilişki o kadar güçlü olabilir.',note:N(cNote(C))},{g:'Analiz',t:'Gözlenen sayılar (kümelenmiş sütunlar)',svg:chGroup(C.O,C.rows,C.cols),cap:'Her grubun içinde kategorilerin gözlenen sayıları yan yana gösterilir. Gruplar farklı büyüklükte olabilir; oranları kıyaslamak için önceki grafiğe bak.',note:N(C.minE<5?'⚠️ Bazı hücrelerde beklenen sayı 5’in altında; ki-kare temkinli yorumlanmalı.':'Beklenen sayılar ki-kare için yeterli görünüyor.')});
+  }else if(C.type==='uni'){
+    const G=[{name:C.name,a:C.a}];
+    p.push({g:'Normallik',t:'Histogram ve normal eğri',svg:chHist(C.a),cap:cH,note:N(hNote(C.a))},{g:'Normallik',t:'Q-Q grafiği',svg:chQQ(C.a),cap:cQ,note:N(qNote(C.a))},{g:'Analiz',t:'Kırmızı halkalı kutu grafiği',svg:chBox(G,!rep),cap:cB,note:N(bNote(G))},{g:'Analiz',t:'Ortalama ve %95 güven aralığı',svg:chBar(G,C.mu),cap:cR+' Kırmızı kesikli çizgi karşılaştırma değeridir (μ₀). Güven aralığı bu çizgiyi içermiyorsa ortalama μ₀’dan farklıdır (seçtiğin α düzeyinde).',note:N(rNote(G,C.mu))});
+  }else if(C.type==='corr'){
+    p.push({g:'Analiz',t:'Saçılım grafiği ve regresyon doğrusu',svg:chScatter(C.A,C.B,C.xn,C.yn,C.b0,C.b1),cap:'Her nokta bir gözlemi gösterir. Kırmızı çizgi en uygun doğrusal ilişkiyi (regresyon doğrusunu) temsil eder. Noktalar çizgiye ne kadar yakınsa ilişki o kadar güçlü (doğrusal) demektir.'});
+  }else{
+    C.D.forEach(d=>p.push({g:'Normallik',t:'Histogram: '+d.name+tn,svg:chHist(d.a),cap:cH,note:N(hNote(d.a))}));
+    C.D.forEach(d=>p.push({g:'Normallik',t:'Q-Q grafiği: '+d.name+tn,svg:chQQ(d.a),cap:cQ,note:N(qNote(d.a))}));
+    p.push({g:'Analiz',t:'Grup kutu grafiği'+tn,svg:chBox(C.D,!rep),cap:cB,note:N(bNote(C.D))},{g:'Analiz',t:'Grup ortalamaları ve %95 güven aralığı'+tn,svg:chBar(C.D,null),cap:cR+' Grupların aralıkları birbirinden çok uzaksa fark büyük olabilir; ama kesin karar için testin p değerine bakılır (aralıkların çakışması tek başına anlamsızlık demek değildir).',note:N(rNote(C.D,null))});
+  }
+  return p;
+}
+function openCharts(){if(!CH)return;CP=chartPages();showChart(0)}
+function showChart(i){
+  CI=Math.max(0,Math.min(CP.length-1,i));const c=CP[CI];
+  $('dlgc').innerHTML=`<p class='note'>${c.g} grafikleri · ${CI+1} / ${CP.length}</p><h2>${esc(c.t)}</h2><div class='sc'>${c.svg}</div><p class='note'>${c.cap}</p>${c.note?`<div class='box'>🔎 ${c.note}</div>`:''}<p><button class='alt' onclick='showChart(${CI-1})' ${CI?'':'disabled'}>◀ Önceki</button><button onclick='showChart(${CI+1})' ${CI<CP.length-1?'':'disabled'}>Sonraki ▶</button><button class='alt' onclick='closeDlg()'>Kapat</button></p>`;
+  $('dlg').hidden=false;
+}
+$('clear').onclick=()=>{NR=DR;NC=DC;build();commit();$('c2').hidden=true;$('out').innerHTML=''};
+function demoSet(){
+  const k=[52,48,55,61,50,47,58,53,49,56,54,51],d=[63,59,66,70,61,64,68,57,62,65,60,95];
+  const rows=[['Grup','Puan']];k.forEach(v=>rows.push(['Kontrol',String(v)]));d.forEach((v,i)=>rows.push(['Deney',i===3?'6l':String(v)]));
+  NR=DR;NC=DC;fill(rows);commit();
+};
+
+/* ---------- İstatistik fonksiyonları ---------- */
+const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
+const sd=a=>{const m=mean(a);return Math.sqrt(a.reduce((s,x)=>s+(x-m)**2,0)/(a.length-1))};
+const qt=(s,p)=>{const h=(s.length-1)*p,l=Math.floor(h);return s[l]+(h-l)*((s[l+1]??s[l])-s[l])};
+const srt=a=>a.slice().sort((x,y)=>x-y);
+const poly=(c,x)=>{let r=0,p=1;for(const a of c){r+=a*p;p*=x}return r};
+function outl(a){if(a.length<4)return{mild:[],ext:[]};const s=srt(a),q1=qt(s,.25),q3=qt(s,.75),i=q3-q1;
+  return{mild:a.filter(x=>x<q1-1.5*i||x>q3+1.5*i),ext:a.filter(x=>x<q1-3*i||x>q3+3*i)}}
+function sw(x){
+  x=srt(x);const n=x.length;if(n<3||n>5000||x[0]===x[n-1])return null;
+  const h=n>>1,m=[];for(let i=1;i<=h;i++)m.push(jStat.normal.inv((i-.375)/(n+.25),0,1));
+  let ss=0;m.forEach(v=>ss+=v*v);ss*=2;const sq=Math.sqrt(ss),rsn=1/Math.sqrt(n),a=Array(h);
+  if(n===3)a[0]=Math.SQRT1_2;
+  else{
+    a[0]=poly([0,.221157,-.147981,-2.07119,4.434685,-2.706056],rsn)-m[0]/sq;let i1,fac;
+    if(n>5){i1=2;a[1]=poly([0,.042981,-.293762,-1.752461,5.682633,-3.582633],rsn)-m[1]/sq;
+      fac=Math.sqrt((ss-2*m[0]**2-2*m[1]**2)/(1-2*a[0]**2-2*a[1]**2))}
+    else{i1=1;fac=Math.sqrt((ss-2*m[0]**2)/(1-2*a[0]**2))}
+    for(let i=i1;i<h;i++)a[i]=-m[i]/fac;
+  }
+  const mu=mean(x);let sst=0,sa=0;x.forEach(v=>sst+=(v-mu)**2);for(let i=0;i<h;i++)sa+=a[i]*(x[n-1-i]-x[i]);
+  const W=Math.min(1,sa*sa/sst);let p;
+  if(n===3){p=Math.max(0,1.90985931710274*(Math.asin(Math.sqrt(W))-1.0471975511966))}
+  else{
+    let y=Math.log(1-W),mm,s;
+    if(n<=11){const g=-2.273+.459*n;if(y>=g)return{W,p:1e-99};y=-Math.log(g-y);mm=poly([.544,-.39978,.025054,-6.714e-4],n);s=Math.exp(poly([1.3822,-.77857,.062767,-.0020322],n))}
+    else{const xx=Math.log(n);mm=poly([-1.5861,-.31082,-.083751,.0038915],xx);s=Math.exp(poly([-.4803,-.082676,.0030302],xx))}
+    p=1-jStat.normal.cdf(y,mm,s);
+  }
+  return{W,p};
+}
+function lil(x){
+  const n=x.length;if(n<5)return null;const s=srt(x),m=mean(s),sv=sd(s);if(!sv)return null;let D=0;
+  s.forEach((v,i)=>{const p=jStat.normal.cdf((v-m)/sv,0,1);D=Math.max(D,(i+1)/n-p,p-i/n)});
+  let Kd=D,nd=n;if(n>100){Kd=D*(n/100)**.49;nd=100}
+  let p=Math.exp(-7.01256*Kd*Kd*(nd+2.78019)+2.99587*Kd*Math.sqrt(nd+2.78019)-.122119+.974598/Math.sqrt(nd)+1.67997/nd);
+  if(p>.1){const K=(Math.sqrt(n)-.01+.85/Math.sqrt(n))*Kd;
+    p=K<=.302?1:K<=.5?2.76773-19.828315*K+80.709644*K**2-138.55152*K**3+81.218052*K**4:K<=.9?-4.901232+40.662806*K-97.490286*K**2+94.029866*K**3-32.355711*K**4:K<=1.31?6.198765-19.558097*K+23.186922*K**2-12.234627*K**3+2.423045*K**4:0}
+  return{D,p};
+}
+function ranks(a){const ix=a.map((v,i)=>[v,i]).sort((x,y)=>x[0]-y[0]),r=Array(a.length);let i=0,ties=0;
+  while(i<ix.length){let j=i;while(j+1<ix.length&&ix[j+1][0]===ix[i][0])j++;const rk=(i+j)/2+1;for(let k=i;k<=j;k++)r[ix[k][1]]=rk;const t=j-i+1;ties+=t**3-t;i=j+1}return{r,ties}}
+function mwu(a,b){const n1=a.length,n2=b.length,N=n1+n2,{r,ties}=ranks(a.concat(b));let R1=0;for(let i=0;i<n1;i++)R1+=r[i];
+  const U1=R1-n1*(n1+1)/2,U=Math.min(U1,n1*n2-U1),mu=n1*n2/2,v=n1*n2/12*((N+1)-ties/(N*(N-1))),z=Math.max(0,Math.abs(U1-mu)-.5)/Math.sqrt(v);
+  return{U,z,p:2*(1-jStat.normal.cdf(z,0,1)),r:z/Math.sqrt(N)}}
+function welch(a,b){const m1=mean(a),m2=mean(b),v1=sd(a)**2,v2=sd(b)**2,n1=a.length,n2=b.length,se=Math.sqrt(v1/n1+v2/n2),t=(m1-m2)/se,
+  df=(v1/n1+v2/n2)**2/((v1/n1)**2/(n1-1)+(v2/n2)**2/(n2-1)),p=2*(1-jStat.studentt.cdf(Math.abs(t),df)),sp=Math.sqrt(((n1-1)*v1+(n2-1)*v2)/(n1+n2-2));
+  return{t,df,p,d:(m1-m2)/sp}}
+
+/* ---------- Veri kontrolü ---------- */
+let S=[],FL={};
+function collect(){
+  const g=grid(),hd=g[0]||[],cols=[];
+  for(let c=0;c<NC;c++){
+    const vals=[];for(let r=1;r<g.length;r++){const v=((g[r]||[])[c]||'').trim();if(v!=='')vals.push({v,row:r})}
+    if(!vals.length&&!(hd[c]||'').trim())continue;
+    const nums=vals.filter(x=>!isNaN(toN(x.v))).length,uniq=new Set(vals.map(x=>x.v)).size;
+    const isNum=vals.length&&nums/vals.length>=.7;cols.push({name:(hd[c]||'').trim()||'Değişken'+(c+1),vals,ci:c,type:isNum?(uniq>6?'num':uniq>2?'ord':'nom'):'nom'});
+  }
+  return cols;
+}
+function warnCol(c){
+  const w=[];
+  if(c.type==='num'){
+    const bad=c.vals.filter(x=>isNaN(toN(x.v)));
+    if(bad.length)w.push(`<span class="b">Sayısal sütunda sayı olmayan değer: ${bad.slice(0,4).map(x=>`“${esc(x.v)}” (${cl(x.row,c.ci)})`).join(', ')}. Yazım hatası olabilir (ör. 1 yerine l); bu değerler analize alınmaz.</span>`);
+    bad.forEach(x=>FL[x.row+','+c.ci]='b');const pr=c.vals.filter(x=>!isNaN(toN(x.v))).map(x=>({v:toN(x.v),row:x.row})),a=pr.map(p=>p.v),o=outl(a),rw=arr=>pr.filter(p=>arr.includes(p.v)),at=arr=>rw(arr).slice(0,5).map(p=>cl(p.row,c.ci)).join(', ');rw(o.ext).forEach(p=>FL[p.row+','+c.ci]='b');rw(o.mild).forEach(p=>{if(!FL[p.row+','+c.ci])FL[p.row+','+c.ci]='w'});
+    if(o.ext.length)w.push(`<span class="b">Uç değer: ${o.ext.map(x=>f(x,2)).join(', ')} (${at(o.ext)}). Veri giriş hatası şüphesi var (ör. fazladan rakam, virgül yeri). Kaynağa bakıp doğrula.</span>`);
+    else if(o.mild.length)w.push(`<span class="w">Aykırı olabilecek değer: ${o.mild.map(x=>f(x,2)).join(', ')} (${at(o.mild)}).</span>`);
+    if(a.length<10)w.push('<span class="w">10’dan az gözlem: testlerin gücü düşüktür.</span>');
+  }else{
+    const m={};c.vals.forEach(x=>m[x.v]=(m[x.v]||0)+1);const lv=Object.keys(m);
+    if(c.type==='ord'&&c.vals.some(x=>isNaN(toN(x.v))))w.push('<span class="w">Metin kategorilerin sırası bilinemez: sırayı aşağıdaki “Değer etiketleri” panelinde kodlarla belirle (küçükten büyüğe).</span>');
+    const norm={};lv.forEach(l=>{const k=l.toLowerCase().replace(/\s+/g,'');(norm[k]=norm[k]||[]).push(l)});
+    Object.values(norm).filter(a=>a.length>1).forEach(a=>{c.vals.forEach(x=>{if(a.includes(x.v))FL[x.row+','+c.ci]='w'});w.push(`<span class="b">Aynı kategori farklı yazılmış olabilir: ${a.map(esc).map(x=>'“'+x+'”').join(' / ')} (sütun ${L(c.ci)}, sarıyla işaretli). Aşağıdaki kodlama panelinde aynı kodu vererek birleştirebilirsin.</span>`)});
+    if(lv.length>10)w.push(`<span class="w">${lv.length} farklı kategori var. Bu aslında sayısal bir değişken olabilir mi?</span>`);
+    const sm=lv.filter(l=>m[l]<5);if(sm.length&&lv.length<=10)w.push(`<span class="w">Az gözlemli kategori: ${sm.map(l=>'“'+esc(l)+'” (n='+m[l]+')').join(', ')}.</span>`);
+    if(c.vals.some(x=>!isNaN(toN(x.v)))&&c.vals.some(x=>isNaN(toN(x.v))))w.push('<span class="w">Hem sayı hem metin içeriyor. Tür doğru mu?</span>');
+  }
+  return w.length?w.join('<br>'):'<span class="o">Sorun görünmüyor</span>';
+}
+function renderCheck(){FL={};
+  $('chk').innerHTML='<table><tr><th>Değişken</th><th>n</th><th>Tür</th><th>Uyarılar</th></tr>'+S.map((c,i)=>
+    `<tr><td>${esc(c.name)}</td><td>${c.vals.length}</td><td><select onchange="S[${i}].type=this.value;renderCheck();fillSel()"><option value="num"${c.type==='num'?' selected':''}>Ölçek (sayısal)</option><option value="ord"${c.type==='ord'?' selected':''}>Sıralı (ordinal)</option><option value="nom"${c.type==='nom'?' selected':''}>Adlandırma (nominal)</option></select></td><td>${warnCol(c)}</td></tr>`).join('')+'</table>';
+}
+function fillSel(){
+  const d=$('dv').value,g=$('gv').value;
+  const opt=t=>S.map((c,i)=>t.includes(c.type)?`<option value="${i}">${esc(c.name)}</option>`:'').join('');
+  $('dv').innerHTML=opt(['num','ord','nom']);$('gv').innerHTML='<option value="">— Yok (tek değişkenli) —</option>'+opt(['nom','ord','num']);
+  if(d)$('dv').value=d;else pick($('dv'),['num','ord','nom']);if(g)$('gv').value=g;else pick($('gv'),['nom','ord','num'],$('dv').value);renderLabels();paint();
+}
+$('check').onclick=()=>{const old=S;S=collect();S.forEach(c=>{const o=old.find(q=>q.name===c.name);if(o&&o.map){c.map=o.map;c.type=o.type}});if(!S.length){$('c2').hidden=false;$('chk').innerHTML='<span class="b">Önce tabloya veri gir.</span>';return}$('c2').hidden=false;$('out').innerHTML='';renderCheck();fillSel();$('c2').scrollIntoView({behavior:'smooth'})};
+
+function paint(){
+  document.querySelectorAll('#g input').forEach(i=>{i.style.background=''});
+  Object.keys(FL).forEach(k=>{const[r,c]=k.split(',');const el=document.querySelector(`#g input[data-r="${r}"][data-c="${c}"]`);if(el)el.style.background=FL[k]==='b'?'rgba(255,90,70,.45)':'rgba(255,196,0,.5)'});
+}
+$('g').addEventListener('input',e=>{e.target.style.background=''});
+function renderLabels(){
+  let h='';
+  S.forEach((c,i)=>{
+    if(c.type==='num')return;
+    c.map=c.map||{};const cnt={};c.vals.forEach(x=>cnt[x.v]=(cnt[x.v]||0)+1);c.keys=Object.keys(cnt);
+    c.keys.forEach(v=>{if(!c.map[v]){const nv=toN(v);c.map[v]={code:isNaN(nv)?Object.keys(c.map).length+1:nv,label:v}}});
+    if(c.keys.length>30){h+=`<p><b>${esc(c.name)}</b>: ${c.keys.length} farklı değer var, kodlama paneli gösterilmedi.</p>`;return}
+    h+=`<p><b>${esc(c.name)}</b> <span class="note">(${c.type==='ord'?'sıralı':'adlandırma'})</span></p><table><tr><th>Ham değer</th><th>n</th><th>Kod</th><th>Etiket</th></tr>`+c.keys.map((v,j)=>`<tr><td>${esc(v)}</td><td>${cnt[v]}</td><td><input type="number" step="any" value="${c.map[v].code}" oninput="S[${i}].map[S[${i}].keys[${j}]].code=parseFloat(this.value)"></td><td><input value="${esc(c.map[v].label)}" oninput="S[${i}].map[S[${i}].keys[${j}]].label=this.value"></td></tr>`).join('')+'</table>';
+  });
+  $('lab').innerHTML=h||'<span class="note">Adlandırma ya da sıralı değişken yok.</span>';
+}
+
+/* ---------- Analiz ---------- */
+function describe(name,a){
+  const n=a.length,sh=sw(a),ks=lil(a),o=outl(a),useKS=n>=30,pm=useKS?ks&&ks.p:sh&&sh.p;
+  return{name,a,n,m:mean(a),s:n>1?sd(a):NaN,md:qt(srt(a),.5),sh,ks,o,useKS,pm,normal:pm!=null&&pm>ALPHA};
+}
+$('run').onclick=()=>{try{runAnalysis()}catch(e){$('out').innerHTML='<div class="card"><p class="b">Beklenmedik bir sorun çıktı. Verini ve seçimlerini kontrol et; sorun sürerse bu mesajı ilet: '+esc(e.message)+'</p></div>'}};
+function runAnalysis(tr){
+  $('msg').textContent='';
+  if(typeof jStat==='undefined'){$('out').innerHTML='<div class="card"><p class="b">İstatistik kütüphanesi (jStat) yüklenemedi. İnternet bağlantını kontrol edip sayfayı yenile.</p></div>';return}
+  if(!$('dv').value){$('msg').textContent='Bir sonuç değişkeni seçmelisin. Liste boşsa, değişkenin düzeyini yukarıdaki tablodan Ölçek ya da Sıralı yap.';return}if($('gv').value&&$('gv').value===$('dv').value){unsup('same');return}if(!$('gv').value){runUni();return}{const _d=S[+$('dv').value],_g=S[+$('gv').value],_m=$('amac').value;if(_g.type==='num'){if(_m==='pair'){runPaired(_d,_g);return}runCorr(_d,_g);return}if(_d.type==='nom'||_m==='rel'||(_m==='auto'&&_d.type==='ord'&&_g.type==='ord')){runChi();return}}if(false){$('msg').textContent='Bir sonuç ve bir grup değişkeni seçmelisin. Liste boşsa, ilgili değişkenin düzeyini yukarıdaki tablodan değiştir (sonuç için Ölçek ya da Sıralı, grup için Adlandırma ya da Sıralı).';return}
+  const dv=S[+$('dv').value],gv=S[+$('gv').value],byRow={},GL={};const val=(c,x)=>c.type==='num'?toN(x.v):(c.map&&c.map[x.v]?c.map[x.v].code:NaN);
+  dv.vals.forEach(x=>{const n=val(dv,x);if(!isNaN(n))byRow[x.row]=n});
+  const G={};gv.vals.forEach(x=>{const m=gv.map&&gv.map[x.v];if(!m||isNaN(m.code)||byRow[x.row]==null)return;(G[m.code]=G[m.code]||[]).push(byRow[x.row]);if(GL[m.code]==null)GL[m.code]=m.label||String(m.code)});
+  const lv=Object.keys(G);let h='';
+  if(lv.length>12){unsup('many');return}if(lv.length<2){$('out').innerHTML='<div class="card"><p class="b">Karşılaştırma için en az 2 grup gerekir. “'+esc(gv.name)+'” değişkeninde yalnızca '+lv.length+' grup var. Değer etiketleri panelinde kodları kontrol et.</p></div>';return}
+  let D=lv.map(l=>describe(GL[l],G[l]));
+  if(D.some(d=>d.n<3)){$('out').innerHTML='<div class="card"><p class="b">Her grupta en az 3 gözlem gerekir.</p></div>';return}
+  let trNote='';const raw0={};lv.forEach(l=>{raw0[l]=G[l].slice()});
+  if(dv.type!=='ord'&&tr===undefined&&!D.every(d=>d.normal)){askTransform(D);return}
+  if(tr==='log'||tr==='sqrt'){
+    const all=lv.flatMap(l=>G[l]),mn=Math.min(...all),sh=tr==='log'?(mn<=0?1-mn:0):(mn<0?-mn:0);
+    lv.forEach(l=>{G[l]=G[l].map(x=>tr==='log'?Math.log10(x+sh):Math.sqrt(x+sh))});
+    D=lv.map(l=>describe(GL[l],G[l]));
+    trNote=`<div class="box"><b>Dönüşüm uygulandı:</b> ${tr==='log'?'log₁₀(x':'√(x'}${sh?' + '+f(sh,2):''}). Tablodaki ortalama, SS ve medyan dönüştürülmüş ölçektedir. Normallik dönüştürülmüş veriye göre yeniden sınandı; hâlâ bozuksa sıra tabanlı teste geçilir.</div>`;
+  }
+  if(lv.length>2){runMulti(D,dv,gv,tr,trNote,raw0,lv,GL);return}
+  const ordDV=dv.type==='ord',allN=!ordDV&&D.every(d=>d.normal),W=welch(D[0].a,D[1].a),M=mwu(D[0].a,D[1].a);
+  h+=`<div class="card"><h2>3) Normallik: neden önce buna bakıyoruz?</h2>
+  <p>t testi gibi parametrik testler, verinin her grupta yaklaşık normal dağıldığını varsayar. Bu varsayım bozulursa p değeri güvenilmez olur. Bu yüzden test seçmeden önce normalliği her grup için ayrı ayrı sınarız. H₀: veri normal dağılımdan gelir. p &gt; α ise H₀ reddedilmez, yani normallikten sapma kanıtlanamamıştır.</p>
+  <div class="sc"><table><tr><th>Grup</th><th>n</th><th>Ort.</th><th>SS</th><th>Medyan</th><th>Shapiro-Wilk</th><th>Kolmogorov-Smirnov (Lilliefors)</th><th>Aykırı</th><th>Karar</th></tr>`+
+  D.map(d=>`<tr><td>${esc(d.name)}</td><td>${d.n}</td><td>${f(d.m,2)}</td><td>${f(d.s,2)}</td><td>${f(d.md,2)}</td><td>${d.sh?`W=${f(d.sh.W)}, p=${fp(d.sh.p)}`:'–'}</td><td>${d.ks?`D=${f(d.ks.D)}, p=${fp(d.ks.p)}`:'n&lt;5'}</td><td>${d.o.ext.length?'<span class="b">uç: '+d.o.ext.map(x=>f(x,1)).join(', ')+'</span>':d.o.mild.length?'<span class="w">'+d.o.mild.map(x=>f(x,1)).join(', ')+'</span>':'yok'}</td><td>${d.normal?'<span class="o">Normal</span>':'<span class="b">Normal değil</span>'} <span class="note">(${d.useKS?'KS':'SW'})</span></td></tr>`).join('')+
+  `</table></div>
+  ${trNote}${ordDV?'<div class="box"><b>Sıralı değişken:</b> Sonuç değişkeni sıralı olduğundan normallik varsayımı aranmaz; test, ölçek düzeyine göre seçilir. Yukarıdaki normallik sonuçları yalnızca bilgi içindir.</div>':''}<div class="box"><b>Kural:</b> n &lt; 30 olan grupta karar Shapiro-Wilk ile, n ≥ 30 olan grupta Kolmogorov-Smirnov (Lilliefors düzeltmeli) ile verilir. Diğer test bilgi olarak gösterilir. Küçük örneklemlerde Shapiro-Wilk daha güçlüdür. Büyük örneklemlerde ise çok küçük sapmalar bile anlamlı çıkabilir, bu yüzden histogram ve Q-Q grafiğiyle de bakmak iyi olur.</div>`;
+  const oe=D.filter(d=>d.o.ext.length);
+  if(oe.length)h+=`<p class="b">⚠️ ${oe.map(d=>esc(d.name)).join(', ')} grubunda uç değer var. Normallik sonucu bundan etkilenmiş olabilir. Değer veri giriş hatasıysa düzeltip analizi yeniden çalıştır. Gerçek bir gözlemse silme, hem sonuçları hem de dayanıklı (sıra tabanlı) testi birlikte raporla.</p>`;
+  h+='</div>';
+  const par=allN;
+  h+=`<div class="card"><h2>4) Seçilen test</h2><div class="box"><b>${par?'Bağımsız örneklem t testi (Welch)':'Mann-Whitney U testi'}</b></div>
+  <h3>Neden bu test?</h3><ul><li>Sonuç değişkeni (“${esc(dv.name)}”) sayısal, grup değişkeni (“${esc(gv.name)}”) 2 kategorili ve gruplar birbirinden bağımsız. Bu yapı iki bağımsız grubun karşılaştırmasıdır.</li>
+  <li>${par?'İki grup da normallik varsayımını bozmadığı için parametrik test uygundur. Welch düzeltmesi, varyanslar eşit olmasa da geçerli olduğundan güvenli varsayılandır.':(ordDV?'Sonuç değişkeni sıralı (ordinal) ölçekte olduğu için değerler arasındaki farklar eşit aralıklı kabul edilemez; ortalama ve t testi anlamsızdır. Bu yüzden normallikten bağımsız olarak sıralara dayanan Mann-Whitney U seçildi.':'En az bir grupta normallik reddedildiği için ortalamalar yerine sıralara dayanan, dağılım varsayımı gerektirmeyen parametrik olmayan test seçildi.')}</li></ul>
+  <h3>Ne işe yarar?</h3><p>${par?'H₀: iki grubun ortalamaları eşittir. p &lt; α ise ortalamalar arasındaki fark tesadüfle açıklanamayacak kadar büyüktür.':'H₀: iki grubun dağılımları aynıdır (pratikte: biri diğerinden sistematik olarak büyük değildir). p &lt; α ise gruplardan biri belirgin biçimde daha yüksek değerlere eğilimlidir.'}</p>
+  <h3>Sonuç</h3>`+(par?
+  `<p>t(${f(W.df,2)}) = ${f(W.t,2)}, p ${W.p<.001?'< ,001':'= '+f(W.p,3)}, Cohen d = ${f(W.d,2)}. Ortalama farkı = ${f(D[0].m-D[1].m,2)}.</p>`:
+  `<p>U = ${f(M.U,1)}, z = ${f(M.z,2)}, p ${M.p<.001?'< ,001':'= '+f(M.p,3)}, r = ${f(M.r,2)}. Medyanlar: ${esc(D[0].name)} = ${f(D[0].md,2)}, ${esc(D[1].name)} = ${f(D[1].md,2)}.</p>`)+
+  `<p>${(par?W.p:M.p)<ALPHA?'<span class="o">İstatistiksel olarak anlamlı fark var (α = '+fa(ALPHA)+').</span>':'<span class="w">Anlamlı fark bulunamadı. Bu, grupların eşit olduğunu kanıtlamaz; örneklem küçükse gücün düşük olması da sebep olabilir.</span>'}</p>
+  <p class="note">Etki büyüklüğü için kabaca: d ≈ 0,2 küçük, 0,5 orta, 0,8 büyük. r için 0,1 küçük, 0,3 orta, 0,5 büyük. p değeri farkın var olup olmadığını, etki büyüklüğü ise ne kadar büyük olduğunu söyler. İkisi birlikte raporlanmalıdır.</p></div>
+  <div class="card"><h2>5) Alternatifler</h2><ul>
+  <li>${par?'<b>Mann-Whitney U</b> (sıra tabanlı): ':'<b>Welch t testi</b> (ortalama tabanlı): '}${par?`U = ${f(M.U,1)}, z = ${f(M.z,2)}, p = ${fp(M.p)}`:`t(${f(W.df,2)}) = ${f(W.t,2)}, p = ${fp(W.p)}`}. ${par?'Normallikten şüphe duyuyorsan ya da uç değerlerin etkisini görmek istiyorsan bakılır.':(ordDV?'Sıralı veride genellikle uygun değildir; düzey sayısı çok fazlaysa (ör. 7 ve üzeri) bilgi için bakılabilir. Çok sayıda eşit değer (bağ) varsa Mann-Whitney sonucunu yorumlarken bunu da dikkate al.':'Normallik varsayımı sağlansaydı kullanılacak testti. Büyük örneklemde (n ≥ 30) merkezi limit teoremi nedeniyle genelde sağlam çalışır, ama bu kararı gerekçesiyle ver.')}</li>
+  <li><b>Student t testi</b>: varyanslar eşitse kullanılır, Welch bunun daha güvenli halidir.</li>
+  <li><b>Permütasyon testi / bootstrap</b>: dağılım varsayımı istemez, küçük örneklemde iyi bir seçenektir (bu sürümde yok).</li>
+  <li><b>Veri dönüşümü</b> (log, karekök): sağa çarpık verilerde normallik sağlayabilir, ama yorumu zorlaştırır.</li></ul>
+  <p class="note">Not: Bu araç hâlâ geliştirme aşamasında. Sonuçları yayımlamadan önce R ya da SPSS ile doğrula.</p></div>`;
+  CH={type:'two',D:D.map(d=>({name:d.name,a:d.a})),tr:tr||''};RES={type:'two',dv:dv.name,gv:gv.name,D,W,M,par:allN,ord:ordDV,tr:tr||'',alpha:ALPHA,raw:lv.map(l=>({name:GL[l],a:raw0[l]})),warn:[warnCol(dv),warnCol(gv)]};h+='<div class="card"><button onclick="openCharts()">📈 Grafikler (normallik ve analiz)</button> <button onclick="openReport()">📄 Tüm analizi detaylı gör</button></div>';$('out').innerHTML=h;$('out').scrollIntoView({behavior:'smooth'});
+};
+$('likert').onclick=openLikert;$('about').onclick=openAbout;$('fb').onclick=()=>openFeedback();$('run').onclick=()=>alphaGate(()=>go());build();last=snap();
+</script>
+</body>
+</html>
